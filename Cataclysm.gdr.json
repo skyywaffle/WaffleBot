@@ -1,0 +1,375 @@
+{
+    "author": "falaflewaffel",
+    "bot": {
+        "name": "xdBot",
+        "version": "v2.3.11"
+    },
+    "coins": 0,
+    "description": "",
+    "duration": 15.041666984558105,
+    "framerate": 240,
+    "gameVersion": 2.2060000896453857,
+    "inputs": [
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 251
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 277
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 310
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 333
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 455
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 466
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 576
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 599
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 721
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 752
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 916
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 938
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 959
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 980
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1074
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1162
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1325
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1346
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1469
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1509
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1557
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1588
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1624
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1671
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1768
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1791
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1811
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1832
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1856
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1934
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1959
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1975
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1994
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2009
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2068
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2090
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2121
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2143
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2160
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2213
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2262
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2306
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2340
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2380
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2417
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2469
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2528
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2571
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2624
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2682
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2728
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2746
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2764
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2815
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2884
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2912
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 3446
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 3468
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 3610
+        }
+    ],
+    "ldm": false,
+    "level": {
+        "id": 3979721,
+        "name": "Cataclysm"
+    },
+    "seed": 0,
+    "version": 1
+}
