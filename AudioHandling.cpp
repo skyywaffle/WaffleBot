@@ -1,8 +1,8 @@
 #include "AudioHandling.h"
 #include "Macro.h"
 #include "Input.h"
-#include <libsndfile/sndfile.h>
-#include <libsndfile/sndfile.hh>
+#include <sndfile.h>
+#include <sndfile.hh>
 #include <iostream>
 #include <vector>
 #include <cstring>
