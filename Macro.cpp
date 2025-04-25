@@ -8,6 +8,7 @@
 using Json = nlohmann::json;
 
 // File type is JSON
+// Currently only supports xdBot macros
 Macro::Macro(std::string filename)
 {
     // I previously tried this with regular constructor initialization and the piece of shit kept throwing errors
@@ -26,13 +27,19 @@ Macro::Macro(std::string filename)
                                  m_jsonData["inputs"][index]["down"],
                                  false));
 
-        // if time between this click and the previous click is less than 0.2, make it soft
-        // compare this with the previous click in the macro
         for (int index{2}; index < m_inputs.size(); index++)
         {
+            // compare this with the previous click in the macro
             if (m_inputs[index].isDown())
             {
+                // if time between this click and the previous click is less than 0.2, make it soft
                 if (m_inputs[index].getFrame() - m_inputs[index - 2].getFrame() < 48) // because the indices are always click-release-click-release....
+                {
+                    m_inputs[index].setSoft(true);
+                }
+
+                // if time between this click and the previous release is less than 0.1, make it soft
+                else if (m_inputs[index].getFrame() - m_inputs[index - 1].getFrame() < 24) // because the indices are always click-release-click-release....
                 {
                     m_inputs[index].setSoft(true);
                 }
