@@ -26,11 +26,37 @@ void mix_click(std::vector<short> &outBuffer, const std::vector<short> &click, i
     }
 }
 
+struct AudioFile
+{
+    SF_INFO info;
+    SNDFILE *file;
+    std::vector<short> buffer;
+};
+
 // Returns whether audio generation succeeded
 bool generateAudio(const Macro &macro)
 {
-    SF_INFO sfinfoClick;
-    SNDFILE *clickFile = sf_open("click.wav", SFM_READ, &sfinfoClick);
+    // TODO: refactor the fuck out of this function
+
+    std::vector<AudioFile> clicks{};
+    std::vector<AudioFile> releases{};
+    std::vector<AudioFile> softClicks{};
+    std::vector<AudioFile> softReleases{};
+
+    // TODO: iterate over files in "clicks" folder, add each to clicks vector
+    // ...
+
+    // TODO: iterate over files in "releases" folder, add each to releases vector
+    // ...
+
+    // TODO: iterate over files in "softClicks" folder, add each to softClicks vector
+    // ...
+
+    // TODO: iterate over files in "softReleases" folder, add each to softReleases vector
+    // ...
+
+    AudioFile click{};
+    click.file = sf_open("click.wav", SFM_READ, &click.info);
 
     SF_INFO sfinfoRelease;
     SNDFILE *releaseFile = sf_open("release.wav", SFM_READ, &sfinfoRelease);
@@ -42,9 +68,9 @@ bool generateAudio(const Macro &macro)
     SNDFILE *softReleaseFile = sf_open("softrelease.wav", SFM_READ, &sfinfoSoftRelease);
 
     // Read the click samples
-    std::vector<short> clickBuffer(sfinfoClick.frames * sfinfoClick.channels);
-    sf_read_short(clickFile, clickBuffer.data(), clickBuffer.size());
-    sf_close(clickFile);
+    click.buffer.resize(click.info.frames * click.info.channels);
+    sf_read_short(click.file, click.buffer.data(), click.buffer.size());
+    sf_close(click.file);
 
     // Read the release samples
     std::vector<short> releaseBuffer(sfinfoRelease.frames * sfinfoRelease.channels);
@@ -63,8 +89,8 @@ bool generateAudio(const Macro &macro)
 
     // Define the total duration in seconds of the output file
     float durationSeconds = (float)(macro.getDurationInSec() + 1);
-    int sampleRate = sfinfoClick.samplerate;
-    int channels = sfinfoClick.channels;
+    int sampleRate = click.info.samplerate;
+    int channels = click.info.channels;
     sf_count_t totalFrames = static_cast<sf_count_t>(durationSeconds * sampleRate);
     std::vector<short> outputBuffer(totalFrames * channels, 0); // Silent buffer
 
@@ -105,7 +131,7 @@ bool generateAudio(const Macro &macro)
     {
         sf_count_t frameIndex = static_cast<sf_count_t>(t * sampleRate);
         int sampleIndex = frameIndex * channels; // Interleaved
-        mix_click(outputBuffer, clickBuffer, sampleIndex, channels);
+        mix_click(outputBuffer, click.buffer, sampleIndex, channels);
     }
 
     // Add releases to output buffer
@@ -133,7 +159,7 @@ bool generateAudio(const Macro &macro)
     }
 
     // Write to new WAV file
-    SF_INFO sfinfoOut = sfinfoClick;
+    SF_INFO sfinfoOut = click.info;
     sfinfoOut.frames = totalFrames;
     SNDFILE *outFile = sf_open("output.wav", SFM_WRITE, &sfinfoOut);
 

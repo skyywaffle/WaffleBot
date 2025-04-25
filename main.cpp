@@ -11,7 +11,7 @@ using Json = nlohmann::json;
 
 int main()
 {
-    Macro macro{"Cataclysm.gdr.json"};
+    Macro macro{"Acheron.gdr.json"};
 
     // test for seeing what clicks are soft
     for (Input i : macro.getInputs())
