@@ -138,42 +138,10 @@ bool generateAudio(const Macro &macro)
         }
     }
 
-    AudioFile click{};
-    click.file = sf_open("clicks/1.wav", SFM_READ, &click.info);
-
-    SF_INFO sfinfoRelease;
-    SNDFILE *releaseFile = sf_open("release.wav", SFM_READ, &sfinfoRelease);
-
-    SF_INFO sfinfoSoftClick;
-    SNDFILE *softClickFile = sf_open("softclick.wav", SFM_READ, &sfinfoSoftClick);
-
-    SF_INFO sfinfoSoftRelease;
-    SNDFILE *softReleaseFile = sf_open("softrelease.wav", SFM_READ, &sfinfoSoftRelease);
-
-    // Read the click sample
-    click.buffer.resize(click.info.frames * click.info.channels);
-    sf_read_short(click.file, click.buffer.data(), click.buffer.size());
-    sf_close(click.file);
-
-    // Read the release samples
-    std::vector<short> releaseBuffer(sfinfoRelease.frames * sfinfoRelease.channels);
-    sf_read_short(releaseFile, releaseBuffer.data(), releaseBuffer.size());
-    sf_close(releaseFile);
-
-    // Read the softclick samples
-    std::vector<short> softClickBuffer(sfinfoSoftClick.frames * sfinfoSoftClick.channels);
-    sf_read_short(softClickFile, softClickBuffer.data(), softClickBuffer.size());
-    sf_close(softClickFile);
-
-    // Read the softrelease samples
-    std::vector<short> softReleaseBuffer(sfinfoSoftRelease.frames * sfinfoSoftRelease.channels);
-    sf_read_short(softReleaseFile, softReleaseBuffer.data(), softReleaseBuffer.size());
-    sf_close(softReleaseFile);
-
     // Define the total duration in seconds of the output file
     float durationSeconds = (float)(macro.getDurationInSec() + 1);
-    int sampleRate = click.info.samplerate;
-    int channels = click.info.channels;
+    int sampleRate = clicks[0].info.samplerate;
+    int channels = clicks[0].info.channels;
     sf_count_t totalFrames = static_cast<sf_count_t>(durationSeconds * sampleRate);
     std::vector<short> outputBuffer(totalFrames * channels, 0); // Silent buffer
 
@@ -259,7 +227,7 @@ bool generateAudio(const Macro &macro)
     }
 
     // Write to new WAV file
-    SF_INFO sfinfoOut = click.info;
+    SF_INFO sfinfoOut = clicks[0].info;
     sfinfoOut.frames = totalFrames;
     SNDFILE *outFile = sf_open("output.wav", SFM_WRITE, &sfinfoOut);
 
