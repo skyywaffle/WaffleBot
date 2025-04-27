@@ -20,7 +20,7 @@ Macro::Macro(std::string filepath)
     }
     Json clickConfig = Json::parse(std::ifstream("config.json"));
 
-        m_name = fs::path(filepath).filename().string();
+    m_name = fs::path(filepath).filename().string();
     m_jsonData = Json::parse(std::ifstream{filepath});
     m_framerate = m_jsonData["framerate"];
     m_durationInSec = m_jsonData["duration"];

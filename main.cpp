@@ -8,6 +8,7 @@
 #include <iostream>
 
 using Json = nlohmann::json;
+namespace fs = std::filesystem;
 
 int main(int argc, char *argv[])
 {
@@ -16,6 +17,7 @@ int main(int argc, char *argv[])
 
     if (argc >= 2)
     {
+
         for (std::size_t arg{1}; arg < argc; arg++)
         {
             generateAudio(Macro(argv[arg]));
