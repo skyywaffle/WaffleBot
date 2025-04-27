@@ -11,6 +11,9 @@ using Json = nlohmann::json;
 
 int main(int argc, char *argv[])
 {
+    std::string versionNumber{"1.0"};
+    std::cout << "WaffleBot " << versionNumber << " by skyywaffle\n\n";
+
     if (argc >= 2)
     {
         for (std::size_t arg{1}; arg < argc; arg++)
@@ -22,6 +25,10 @@ int main(int argc, char *argv[])
     {
         std::cout << "No macro files given.\n";
     }
+
+    std::cout << "\nPress Enter to exit...";
+    std::string dummy;
+    std::getline(std::cin, dummy);
 
     return 0;
 }
