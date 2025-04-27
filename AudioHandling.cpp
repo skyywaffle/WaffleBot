@@ -37,7 +37,7 @@ void mix_click(std::vector<short> &outBuffer, const std::vector<short> &click, i
     }
 }
 
-std::vector<AudioFile> getAudioFiles(const char* folderName)
+std::vector<AudioFile> getAudioFiles(const char *folderName)
 {
     std::vector<AudioFile> files{};
 
@@ -70,7 +70,7 @@ std::vector<AudioFile> getAudioFiles(const char* folderName)
     return files;
 }
 
-void addToBuffer(std::vector<float>& inputTimes, std::vector<AudioFile>& files, std::vector<short>& buffer, int sampleRate, int channels)
+void addToBuffer(std::vector<float> &inputTimes, std::vector<AudioFile> &files, std::vector<short> &buffer, int sampleRate, int channels)
 {
     // Add clicks to output buffer
     for (float t : inputTimes)
@@ -116,22 +116,22 @@ bool generateAudio(const Macro &macro)
         {
             if (i.isSoft())
             {
-                softClickTimes.push_back(i.getFrame() / 240.0f);
+                softClickTimes.push_back(i.getFrame() / (float)macro.getFramerate());
             }
             else
             {
-                clickTimes.push_back(i.getFrame() / 240.0f);
+                clickTimes.push_back(i.getFrame() / (float)macro.getFramerate());
             }
         }
         else
         {
             if (i.isSoft())
             {
-                softReleaseTimes.push_back(i.getFrame() / 240.0f);
+                softReleaseTimes.push_back(i.getFrame() / (float)macro.getFramerate());
             }
             else
             {
-                releaseTimes.push_back(i.getFrame() / 240.0f);
+                releaseTimes.push_back(i.getFrame() / (float)macro.getFramerate());
             }
         }
     }
@@ -145,7 +145,7 @@ bool generateAudio(const Macro &macro)
     // Write to new WAV file
     SF_INFO sfinfoOut = clicks[0].info;
     sfinfoOut.frames = totalFrames;
-    SNDFILE *outFile = sf_open("output.wav", SFM_WRITE, &sfinfoOut);
+    SNDFILE *outFile = sf_open(macro.getName().append(".wav").c_str(), SFM_WRITE, &sfinfoOut);
 
     if (!outFile)
     {
@@ -156,7 +156,7 @@ bool generateAudio(const Macro &macro)
     sf_write_short(outFile, outputBuffer.data(), outputBuffer.size());
     sf_close(outFile);
 
-    std::cout << "Click sequence written to: " << "output.wav" << std::endl;
+    std::cout << "Click sequence written to: " << macro.getName().append(".wav") << std::endl;
 
     return true;
 }

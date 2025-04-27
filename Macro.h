@@ -9,6 +9,7 @@ using Json = nlohmann::json;
 class Macro
 {
 private:
+    std::string m_name{};
     Json m_jsonData{};
     int m_framerate{};
     double m_durationInSec{};
@@ -23,4 +24,5 @@ public:
     double getDurationInSec() const { return m_durationInSec; }
     int getFrameCount() const { return m_frameCount; }
     std::vector<Input> getInputs() const { return m_inputs; }
+    std::string getName() const { return m_name; }
 };

@@ -11,9 +11,11 @@ using Json = nlohmann::json;
 // Currently only supports xdBot macros
 Macro::Macro(std::string filename)
 {
-    // I previously tried this with regular constructor initialization and the piece of shit kept throwing errors
-    // I'm not touching this shit again
-    // Stay mad
+    m_name = filename;
+    for (int i {0}; i < 9; i++)
+    {
+        m_name.pop_back();
+    }
     m_jsonData = Json::parse(std::ifstream{filename});
     m_framerate = m_jsonData["framerate"];
     m_durationInSec = m_jsonData["duration"];
