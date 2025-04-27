@@ -4,26 +4,30 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <filesystem>
 #include <nlohmann/json.hpp>
 using Json = nlohmann::json;
+namespace fs = std::filesystem;
 
 // File type is JSON
 // Currently only supports xdBot macros
-Macro::Macro(std::string filename)
+Macro::Macro(std::string filepath)
 {
+    if (!fs::exists("config.json"))
+    {
+        std::cerr << "No config JSON found!\n";
+        std::exit(1);
+    }
+    if (!fs::exists(filepath))
+    {
+        std::cerr << filepath << " not found!\n";
+        std::exit(1);
+    }
     Json clickConfig = Json::parse(std::ifstream("config.json"));
 
-    // determine the index of the start of the actual level name
-    // [SOMETHING IN THIS SNIPPET OF CODE GIVES SEGMENTATION FAULT]
-    int startOfFilename{static_cast<int>(filename.length() - 1)};
-    while (filename[startOfFilename] != '\\' && filename[startOfFilename] != '/' && startOfFilename != -1)
-    {
-        startOfFilename--;
-    }
-    startOfFilename++;
-
-    m_name = filename.substr(startOfFilename);
-    m_jsonData = Json::parse(std::ifstream{filename});
+    
+    m_name = fs::path(filepath).filename().string();
+    m_jsonData = Json::parse(std::ifstream{filepath});
     m_framerate = m_jsonData["framerate"];
     m_durationInSec = m_jsonData["duration"];
     m_frameCount = static_cast<int>(std::round(m_durationInSec * m_framerate));
@@ -34,7 +38,7 @@ Macro::Macro(std::string filename)
         m_name.pop_back();
     }
 
-    for (int index{0}; index < m_jsonData["inputs"].size(); index++) // Json i : m_jsonData["inputs"]
+    for (int index{0}; index < m_jsonData["inputs"].size(); index++)
     {
         m_inputs.push_back(Input(m_jsonData["inputs"][index]["frame"],
                                  m_jsonData["inputs"][index]["2p"],
