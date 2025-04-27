@@ -13,15 +13,16 @@ Macro::Macro(std::string filename)
 {
     Json clickConfig = Json::parse(std::ifstream("config.json"));
 
-    /*// determine the index of the start of the actual level name
-    int startOfFilename{static_cast<int>(filename.length())};
-    while (filename[startOfFilename] != '\\' | filename[startOfFilename] != '/' || startOfFilename != -1)
+    // determine the index of the start of the actual level name
+    // [SOMETHING IN THIS SNIPPET OF CODE GIVES SEGMENTATION FAULT]
+    int startOfFilename{static_cast<int>(filename.length() - 1)};
+    while (filename[startOfFilename] != '\\' && filename[startOfFilename] != '/' && startOfFilename != -1)
     {
         startOfFilename--;
     }
-    startOfFilename++;*/
+    startOfFilename++;
 
-    m_name = filename;
+    m_name = filename.substr(startOfFilename);
     m_jsonData = Json::parse(std::ifstream{filename});
     m_framerate = m_jsonData["framerate"];
     m_durationInSec = m_jsonData["duration"];
