@@ -65,7 +65,7 @@ std::vector<AudioFile> getAudioFiles(const char *folderName)
     }
     else // if the folder name is invalid
     {
-        std::cerr << "Invalid folder name: " << folderName << '\n';
+        std::cerr << "Could not find folder name: " << folderName << '\n';
     }
     return files;
 }
@@ -95,6 +95,27 @@ bool generateAudio(const Macro &macro)
     std::vector<AudioFile> releases{getAudioFiles("releases")};
     std::vector<AudioFile> softClicks{getAudioFiles("softclicks")};
     std::vector<AudioFile> softReleases{getAudioFiles("softreleases")};
+
+    // Check that clicks actually exist
+    if (clicks.size() == 0)
+    {
+        std::cerr << "Error: clicks not found.\n";
+        return false;
+    }
+    if (releases.size() == 0)
+    {
+        std::cout << "Warning: releases not found.\n";
+    }
+    if (softClicks.size() == 0)
+    {
+        std::cout << "Warning: softclicks not found, using normal clicks.\n";
+        softClicks = clicks;
+    }
+    if (softReleases.size() == 0)
+    {
+        std::cout << "Warning: softreleases not found, using normal releases.\n";
+        softReleases = releases;
+    }
 
     // Define the total duration in seconds of the output file
     float durationSeconds = (float)(macro.getDurationInSec() + 1); // add an extra second so no releases get cut off
@@ -149,14 +170,14 @@ bool generateAudio(const Macro &macro)
 
     if (!outFile)
     {
-        std::cerr << "Error creating output file." << std::endl;
+        std::cerr << "Error creating output file for " << macro.getName() << '\n';
         return false;
     }
 
     sf_write_short(outFile, outputBuffer.data(), outputBuffer.size());
     sf_close(outFile);
 
-    std::cout << "Click sequence written to: " << macro.getName().append(".wav") << std::endl;
+    std::cout << "Successfully generated clicks for " << macro.getName().append(".wav") << '\n';
 
     return true;
 }

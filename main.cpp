@@ -11,7 +11,17 @@ using Json = nlohmann::json;
 
 int main(int argc, char *argv[])
 {
-    Macro macro{std::string(argv[1])};
-    generateAudio(macro);
+    if (argc >= 2)
+    {
+        for (std::size_t arg{1}; arg < argc; arg++)
+        {
+            generateAudio(Macro(argv[arg]));
+        }
+    }
+    else
+    {
+        std::cout << "No macro files given.\n";
+    }
+
     return 0;
 }
