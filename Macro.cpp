@@ -18,15 +18,9 @@ Macro::Macro(std::string filepath)
         std::cerr << "No config JSON found!\n";
         std::exit(1);
     }
-    if (!fs::exists(filepath))
-    {
-        std::cerr << filepath << " not found!\n";
-        std::exit(1);
-    }
     Json clickConfig = Json::parse(std::ifstream("config.json"));
 
-    
-    m_name = fs::path(filepath).filename().string();
+        m_name = fs::path(filepath).filename().string();
     m_jsonData = Json::parse(std::ifstream{filepath});
     m_framerate = m_jsonData["framerate"];
     m_durationInSec = m_jsonData["duration"];
