@@ -13,15 +13,25 @@ Macro::Macro(std::string filename)
 {
     Json clickConfig = Json::parse(std::ifstream("config.json"));
 
-    m_name = filename;
-    for (int i{0}; i < 9; i++)
+    /*// determine the index of the start of the actual level name
+    int startOfFilename{static_cast<int>(filename.length())};
+    while (filename[startOfFilename] != '\\' | filename[startOfFilename] != '/' || startOfFilename != -1)
     {
-        m_name.pop_back();
+        startOfFilename--;
     }
+    startOfFilename++;*/
+
+    m_name = filename;
     m_jsonData = Json::parse(std::ifstream{filename});
     m_framerate = m_jsonData["framerate"];
     m_durationInSec = m_jsonData["duration"];
     m_frameCount = static_cast<int>(std::round(m_durationInSec * m_framerate));
+
+    // Strip ".gdr.json" from filename
+    for (int i{0}; i < 9; i++)
+    {
+        m_name.pop_back();
+    }
 
     for (int index{0}; index < m_jsonData["inputs"].size(); index++) // Json i : m_jsonData["inputs"]
     {
