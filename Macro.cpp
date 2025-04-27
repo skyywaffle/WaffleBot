@@ -11,8 +11,10 @@ using Json = nlohmann::json;
 // Currently only supports xdBot macros
 Macro::Macro(std::string filename)
 {
+    Json clickConfig = Json::parse(std::ifstream("config.json"));
+
     m_name = filename;
-    for (int i {0}; i < 9; i++)
+    for (int i{0}; i < 9; i++)
     {
         m_name.pop_back();
     }
@@ -29,19 +31,20 @@ Macro::Macro(std::string filename)
                                  m_jsonData["inputs"][index]["down"],
                                  false));
 
+        // First click and release will always be normal
         for (int index{2}; index < m_inputs.size(); index++)
         {
             // compare this with the previous click in the macro
             if (m_inputs[index].isDown())
             {
-                // if time between this click and the previous click is less than 0.2, make it soft
-                if (m_inputs[index].getFrame() - m_inputs[index - 2].getFrame() < 48) // because the indices are always click-release-click-release....
+                // if time between this click and the previous click is less than user config time, make it soft
+                if (m_inputs[index].getFrame() - m_inputs[index - 2].getFrame() < m_framerate * clickConfig["softclickTime"].get<double>()) // because the indices are always click-release-click-release....
                 {
                     m_inputs[index].setSoft(true);
                 }
 
-                // if time between this click and the previous release is less than 0.1, make it soft
-                else if (m_inputs[index].getFrame() - m_inputs[index - 1].getFrame() < 24) // because the indices are always click-release-click-release....
+                // if time between this click and the previous release is less than user config time, make it soft
+                else if (m_inputs[index].getFrame() - m_inputs[index - 1].getFrame() < m_framerate * clickConfig["softclickAfterReleaseTime"].get<double>()) // because the indices are always click-release-click-release....
                 {
                     m_inputs[index].setSoft(true);
                 }
