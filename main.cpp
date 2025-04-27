@@ -11,7 +11,7 @@ using Json = nlohmann::json;
 
 int main()
 {
-    Macro macro{"Acheron.gdr.json"};
+    Macro macro{"VSC.gdr.json"};
     generateAudio(macro);
     return 0;
 }
