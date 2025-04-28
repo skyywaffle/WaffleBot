@@ -17,6 +17,8 @@ int main(int argc, char *argv[])
 
     if (argc >= 2)
     {
+        // set working directory to exe directory, drag and dropping files from outside the exe directory changes the working directory unintentionally......
+        fs::current_path(fs::canonical(argv[0]).parent_path());
 
         for (std::size_t arg{1}; arg < argc; arg++)
         {
