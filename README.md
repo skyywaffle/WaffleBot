@@ -1,7 +1,7 @@
 # WaffleBot, a clickbot for Geometry Dash written in C++
 # Features
 Generates clicks to a **(currently only xdBot)** macro with support for both normal clicks and soft clicks. Also features a special "softClickAfterRelease" parameter in which it will softclick if you do a micro-release in the macro, to make it more realistic.
-Compatible with both Windows and Linux x86-64
+Compatible with both Windows and Linux x86-64.
 ## Usage
 - Make sure you at least have a clicks folder in the same directory as the program. Supported folders are **"clicks"**, **"releases"**, **"softclicks"** and **"softreleases"**.
 - Also make sure you have a properly formatted **config.json** file, with 2 parameters: 
