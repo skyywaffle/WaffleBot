@@ -26,8 +26,8 @@ Macro::Macro(std::string filepath)
     m_durationInSec = m_jsonData["duration"];
     m_frameCount = static_cast<int>(std::round(m_durationInSec * m_framerate));
 
-    // Strip ".gdr.json" from filename
-    for (int i{0}; i < 9; i++)
+    // Strip ".json" from filename
+    for (int i{0}; i < 5; i++)
     {
         m_name.pop_back();
     }
