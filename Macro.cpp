@@ -34,7 +34,7 @@ Macro::Macro(std::string filepath)
     // Parse MH Replay JSON
     else if (bot == "MH_REPLAY")
     {
-        m_framerate = 240;
+        m_framerate = 240; // Mega Hack Replay JSONs seem to only store time in 240fps frames, regardless of what FPS the macro was actually recorded at
         m_frameCount = m_jsonData["duration"];
         m_durationInSec = (double)m_frameCount / m_framerate;
     }
