@@ -9,8 +9,7 @@
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
 
-// File type is JSON
-// Currently only supports xdBot macros
+// File type is JSON, supports xdBot and MH Replay JSONs
 Macro::Macro(std::string filepath)
 {
     if (!fs::exists("config.json"))
@@ -18,13 +17,27 @@ Macro::Macro(std::string filepath)
         std::cerr << "No config JSON found!\n";
         std::exit(1);
     }
+    
     Json clickConfig = Json::parse(std::ifstream("config.json"));
-
-    m_name = fs::path(filepath).filename().string();
     m_jsonData = Json::parse(std::ifstream{filepath});
-    m_framerate = m_jsonData["framerate"];
-    m_durationInSec = m_jsonData["duration"];
-    m_frameCount = static_cast<int>(std::round(m_durationInSec * m_framerate));
+    std::string bot = m_jsonData["bot"]["name"];
+    m_name = fs::path(filepath).filename().string();
+
+    // Parse xdBot JSON macro
+    if (bot == "xdBot")
+    {
+        m_framerate = m_jsonData["framerate"];
+        m_durationInSec = m_jsonData["duration"];
+        m_frameCount = static_cast<int>(std::round(m_durationInSec * m_framerate));
+    }
+
+    // Parse MH Replay JSON
+    else if (bot == "MH_REPLAY")
+    {
+        m_framerate = 240;
+        m_frameCount = m_jsonData["duration"];
+        m_durationInSec = (double)m_frameCount / m_framerate;
+    }
 
     // Strip ".json" from filename
     for (int i{0}; i < 5; i++)

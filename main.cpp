@@ -12,7 +12,7 @@ namespace fs = std::filesystem;
 
 int main(int argc, char *argv[])
 {
-    std::string versionNumber{"1.0.0-hotfix"};
+    std::string versionNumber{"1.1.0"};
     std::cout << "WaffleBot " << versionNumber << " by skyywaffle\n\n";
 
     if (argc >= 2)
