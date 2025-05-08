@@ -17,11 +17,31 @@ Macro::Macro(std::string filepath)
         std::cerr << "No config JSON found!\n";
         std::exit(1);
     }
-    
+
     Json clickConfig = Json::parse(std::ifstream("config.json"));
     m_jsonData = Json::parse(std::ifstream{filepath});
-    std::string bot = m_jsonData["bot"]["name"];
     m_name = fs::path(filepath).filename().string();
+    std::string bot{};
+
+    // Strip ".json" from filename
+    for (int i{0}; i < 5; i++)
+    {
+        m_name.pop_back();
+    }
+
+    // Determine what bot the macro comes from and set variables accordingly
+
+    // Determine if macro is TASBot
+    if (m_jsonData.begin().key() == "fps") // TASBot has FPS as the first object
+    {
+        bot = "TASBot";
+    }
+
+    // Determine if macro is GDR and assign the bot name
+    else if (m_jsonData["bot"]["name"] != NULL)
+    {
+        bot = m_jsonData["bot"]["name"];
+    }
 
     // Parse xdBot JSON macro
     if (bot == "xdBot")
@@ -39,43 +59,63 @@ Macro::Macro(std::string filepath)
         m_durationInSec = (double)m_frameCount / m_framerate;
     }
 
-    // Strip ".json" from filename
-    for (int i{0}; i < 5; i++)
+    // Parse TASBot macro
+    else if (bot == "TASBot")
     {
-        m_name.pop_back();
+        m_framerate = m_jsonData["fps"];
+        m_frameCount = m_jsonData["macro"][m_jsonData["macro"].size() - 1]["frame"]; // get the framecount from the last input of the macro
+        m_durationInSec = (double)m_frameCount / m_framerate;
     }
 
-    for (int index{0}; index < m_jsonData["inputs"].size(); index++)
+    // Grab inputs for GDR JSON
+    if (bot == "xdBot" || bot == "MH_REPLAY")
     {
-        m_inputs.push_back(Input(m_jsonData["inputs"][index]["frame"],
-                                 m_jsonData["inputs"][index]["2p"],
-                                 m_jsonData["inputs"][index]["btn"],
-                                 m_jsonData["inputs"][index]["down"],
-                                 false));
-
-        // First click and release will always be normal
-        for (int index{2}; index < m_inputs.size(); index++)
+        for (int index{0}; index < m_jsonData["inputs"].size(); index++)
         {
-            // compare this with the previous click in the macro
-            if (m_inputs[index].isDown())
-            {
-                // if time between this click and the previous click is less than user config time, make it soft
-                if (m_inputs[index].getFrame() - m_inputs[index - 2].getFrame() < m_framerate * clickConfig["softclickTime"].get<double>()) // because the indices are always click-release-click-release....
-                {
-                    m_inputs[index].setSoft(true);
-                }
+            m_inputs.push_back(Input(m_jsonData["inputs"][index]["frame"],
+                                     m_jsonData["inputs"][index]["2p"],
+                                     m_jsonData["inputs"][index]["btn"],
+                                     m_jsonData["inputs"][index]["down"],
+                                     false));
+        }
+    }
 
-                // if time between this click and the previous release is less than user config time, make it soft
-                else if (m_inputs[index].getFrame() - m_inputs[index - 1].getFrame() < m_framerate * clickConfig["softclickAfterReleaseTime"].get<double>()) // because the indices are always click-release-click-release....
-                {
-                    m_inputs[index].setSoft(true);
-                }
+    // Grab inputs for TASBot
+    else if (bot == "TASBot")
+    {
+        for (int index{0}; index < m_jsonData["macro"].size(); index++)
+        {
+            int frame{m_jsonData["macro"][index]["frame"]};
+            bool twoPlayer{false};
+            int btn{1};
+            bool down{m_jsonData["macro"][index]["player_1"]["click"] == 1};
+            m_inputs.push_back(Input(frame, twoPlayer, btn, down, false));
+        }
+    }
+
+    // Determine soft clicks
+    // First click and release will always be normal
+    for (int index{2}; index < m_inputs.size(); index++)
+    {
+        // compare this with the previous click in the macro
+        if (m_inputs[index].isDown())
+        {
+            // if time between this click and the previous click is less than user config time, make it soft
+            if (m_inputs[index].getFrame() - m_inputs[index - 2].getFrame() < m_framerate * clickConfig["softclickTime"].get<double>()) // because the indices are always click-release-click-release....
+            {
+                m_inputs[index].setSoft(true);
             }
 
-            else // released
+            // if time between this click and the previous release is less than user config time, make it soft
+            else if (m_inputs[index].getFrame() - m_inputs[index - 1].getFrame() < m_framerate * clickConfig["softclickAfterReleaseTime"].get<double>()) // because the indices are always click-release-click-release....
             {
-                m_inputs[index].setSoft(m_inputs[index - 1].isSoft()); // matching soft release for each soft click
+                m_inputs[index].setSoft(true);
             }
+        }
+
+        else // released
+        {
+            m_inputs[index].setSoft(m_inputs[index - 1].isSoft()); // matching soft release for each soft click
         }
     }
 }

@@ -6,15 +6,17 @@
 #include <string>
 #include <vector>
 #include <iostream>
+// #define DEBUG
 
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
 
 int main(int argc, char *argv[])
 {
-    std::string versionNumber{"1.1.0"};
+    std::string versionNumber{"1.2.0"};
     std::cout << "WaffleBot " << versionNumber << " by skyywaffle\n\n";
 
+    #ifndef DEBUG
     if (argc >= 2)
     {
         // set working directory to exe directory, drag and dropping files from outside the exe directory changes the working directory unintentionally......
@@ -29,6 +31,12 @@ int main(int argc, char *argv[])
     {
         std::cout << "No macro files given.\n";
     }
+    #endif
+
+    // Test a specific macro when looking to add more bot types, debug feature
+    #ifdef DEBUG
+    generateAudio(Macro("Deadlocked Test.json"));
+    #endif
 
     std::cout << "\nPress Enter to exit...";
     std::string dummy;
