@@ -91,10 +91,10 @@ void addToBuffer(std::vector<float> &inputTimes, std::vector<AudioFile> &files, 
 bool generateAudio(Macro &macro)
 {
     // Get click audio files
-    std::vector<AudioFile> clicks{getAudioFiles("clicks")};
-    std::vector<AudioFile> releases{getAudioFiles("releases")};
-    std::vector<AudioFile> softClicks{getAudioFiles("softclicks")};
-    std::vector<AudioFile> softReleases{getAudioFiles("softreleases")};
+    std::vector<AudioFile> clicks{getAudioFiles("player_1/clicks")};
+    std::vector<AudioFile> releases{getAudioFiles("player_1/releases")};
+    std::vector<AudioFile> softClicks{getAudioFiles("player_1/softclicks")};
+    std::vector<AudioFile> softReleases{getAudioFiles("player_1/softreleases")};
 
     // Check that clicks actually exist
     if (clicks.size() == 0)
