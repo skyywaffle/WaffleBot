@@ -1,4 +1,5 @@
 #include "Macro.h"
+#include "Action.h"
 #include "Input.h"
 #include "AudioHandling.h"
 #include <nlohmann/json.hpp>
@@ -16,7 +17,7 @@ int main(int argc, char *argv[])
     std::string versionNumber{"1.2.0"};
     std::cout << "WaffleBot " << versionNumber << " by skyywaffle\n\n";
 
-    #ifndef DEBUG
+#ifndef DEBUG
     if (argc >= 2)
     {
         // set working directory to exe directory, drag and dropping files from outside the exe directory changes the working directory unintentionally......
@@ -24,19 +25,21 @@ int main(int argc, char *argv[])
 
         for (std::size_t arg{1}; arg < argc; arg++)
         {
-            generateAudio(Macro(argv[arg]));
+            Macro macro{argv[arg]};
+            generateAudio(macro);
         }
     }
     else
     {
         std::cout << "No macro files given.\n";
     }
-    #endif
+#endif
 
-    // Test a specific macro when looking to add more bot types, debug feature
-    #ifdef DEBUG
-    generateAudio(Macro("Deadlocked Test.json"));
-    #endif
+// Test a specific macro when looking to add more bot types, debug feature
+#ifdef DEBUG
+    Macro macro{"Deadlocked Test.json"};
+    generateAudio(macro);
+#endif
 
     std::cout << "\nPress Enter to exit...";
     std::string dummy;

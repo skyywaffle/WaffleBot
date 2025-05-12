@@ -1,0 +1,261 @@
+{
+    "author": "falaflewaffel",
+    "bot": {
+        "name": "xdBot",
+        "version": "v2.3.11"
+    },
+    "coins": 0,
+    "description": "",
+    "duration": 10.070833206176758,
+    "framerate": 240,
+    "gameVersion": 2.2060000896453857,
+    "inputs": [
+        {
+            "2p": false,
+            "btn": 2,
+            "down": true,
+            "frame": 247
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 406
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 430
+        },
+        {
+            "2p": false,
+            "btn": 2,
+            "down": false,
+            "frame": 460
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 489
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 514
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 564
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 592
+        },
+        {
+            "2p": false,
+            "btn": 3,
+            "down": true,
+            "frame": 643
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 665
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 688
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 832
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 851
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 980
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1000
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1096
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1118
+        },
+        {
+            "2p": false,
+            "btn": 3,
+            "down": false,
+            "frame": 1128
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1157
+        },
+        {
+            "2p": false,
+            "btn": 2,
+            "down": true,
+            "frame": 1167
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1185
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1345
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1369
+        },
+        {
+            "2p": false,
+            "btn": 2,
+            "down": false,
+            "frame": 1411
+        },
+        {
+            "2p": false,
+            "btn": 3,
+            "down": true,
+            "frame": 1425
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1465
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1485
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1661
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1689
+        },
+        {
+            "2p": false,
+            "btn": 3,
+            "down": false,
+            "frame": 1801
+        },
+        {
+            "2p": false,
+            "btn": 3,
+            "down": true,
+            "frame": 1827
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 1888
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 1909
+        },
+        {
+            "2p": false,
+            "btn": 3,
+            "down": false,
+            "frame": 1938
+        },
+        {
+            "2p": false,
+            "btn": 3,
+            "down": true,
+            "frame": 1962
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": true,
+            "frame": 2037
+        },
+        {
+            "2p": false,
+            "btn": 1,
+            "down": false,
+            "frame": 2055
+        },
+        {
+            "2p": false,
+            "btn": 3,
+            "down": false,
+            "frame": 2081
+        },
+        {
+            "2p": false,
+            "btn": 3,
+            "down": true,
+            "frame": 2403
+        },
+        {
+            "2p": false,
+            "btn": 3,
+            "down": false,
+            "frame": 2417
+        }
+    ],
+    "ldm": false,
+    "level": {
+        "id": 98222333,
+        "name": "Maethrillian"
+    },
+    "seed": 0,
+    "version": 1
+}

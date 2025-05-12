@@ -2,27 +2,34 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 #include <string>
+#include "Action.h"
 #include "Input.h"
 
+class Action;
+
 using Json = nlohmann::json;
+
+enum class Bot
+{
+    XDBOT_GDR,
+    MH_REPLAY_GDR,
+    TASBOT,
+};
 
 class Macro
 {
 private:
     std::string m_name{};
-    Json m_jsonData{};
-    int m_framerate{};
-    double m_durationInSec{};
+    Bot bot{};
+    int m_fps{};
     int m_frameCount{};
-    std::vector<Input> m_inputs{};
+    std::vector<Action> m_actions{};
 
 public:
     explicit Macro(std::string filename);
 
-    Json getJson() const { return m_jsonData; }
-    int getFramerate() const { return m_framerate; }
-    double getDurationInSec() const { return m_durationInSec; }
-    int getFrameCount() const { return m_frameCount; }
-    std::vector<Input> getInputs() const { return m_inputs; }
-    std::string getName() const { return m_name; }
+    int getFps() { return m_fps; }
+    int getFrameCount() { return m_frameCount; }
+    std::vector<Action> &getActions() { return m_actions; }
+    std::string &getName() { return m_name; }
 };

@@ -88,7 +88,7 @@ void addToBuffer(std::vector<float> &inputTimes, std::vector<AudioFile> &files, 
 }
 
 // Returns whether audio generation succeeded
-bool generateAudio(const Macro &macro)
+bool generateAudio(Macro &macro)
 {
     // Get click audio files
     std::vector<AudioFile> clicks{getAudioFiles("clicks")};
@@ -118,7 +118,7 @@ bool generateAudio(const Macro &macro)
     }
 
     // Define the total duration in seconds of the output file
-    float durationSeconds = (float)(macro.getDurationInSec() + 1); // add an extra second so no releases get cut off
+    float durationSeconds = (float)macro.getFrameCount() / macro.getFps() + 2; // add an extra 2 seconds so no releases get cut off
     int sampleRate = clicks[0].info.samplerate;
     int channels = clicks[0].info.channels;
     sf_count_t totalFrames = static_cast<sf_count_t>(durationSeconds * sampleRate);
@@ -131,28 +131,34 @@ bool generateAudio(const Macro &macro)
     std::vector<float> softReleaseTimes{};
 
     // Add the times of inputs to their corresponding vectors
-    for (Input i : macro.getInputs())
+    // Add the times of inputs to their corresponding vectors
+    for (Action action : macro.getActions())
     {
-        if (i.isDown())
+        for (Input input : action.getPlayerOneInputs())
         {
-            if (i.isSoft())
+            if (input.isPressed())
             {
-                softClickTimes.push_back(i.getFrame() / (float)macro.getFramerate());
+                if (input.getClickType() == ClickType::NORMAL)
+                {
+                    clickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                }
+
+                else if (input.getClickType() == ClickType::SOFT)
+                {
+                    softClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                }
             }
             else
             {
-                clickTimes.push_back(i.getFrame() / (float)macro.getFramerate());
-            }
-        }
-        else
-        {
-            if (i.isSoft())
-            {
-                softReleaseTimes.push_back(i.getFrame() / (float)macro.getFramerate());
-            }
-            else
-            {
-                releaseTimes.push_back(i.getFrame() / (float)macro.getFramerate());
+                if (input.getClickType() == ClickType::NORMAL)
+                {
+                    releaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                }
+
+                else if (input.getClickType() == ClickType::SOFT)
+                {
+                    softReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                }
             }
         }
     }
@@ -177,7 +183,7 @@ bool generateAudio(const Macro &macro)
     sf_write_short(outFile, outputBuffer.data(), outputBuffer.size());
     sf_close(outFile);
 
-    std::cout << "Successfully generated clicks for " << macro.getName().append(".wav") << '\n';
+    std::cout << "Successfully generated clicks for " << macro.getName() << '\n';
 
     return true;
 }

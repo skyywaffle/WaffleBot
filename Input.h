@@ -1,26 +1,38 @@
 #pragma once
 
+enum class Button
+{
+    JUMP = 1,
+    LEFT = 2,
+    RIGHT = 3,
+};
+
+enum class ClickType
+{
+    VERY_SOFT,
+    SOFT,
+    NORMAL,
+    HARD,
+    VERY_HARD
+};
+
 class Input
 {
 private:
-    int m_frame{};
-    bool m_is2Player{};
-    int m_button{};
-    bool m_isDown{};
-    bool m_isSoft{};
+    Button m_button{};
+    bool m_pressed{};
+    ClickType m_clickType{};
 
 public:
-    explicit Input(int frame, bool is2Player, int button, bool isDown, bool isSoft)
-        : m_frame{frame}, m_is2Player{is2Player},
-          m_button{button}, m_isDown{isDown},
-          m_isSoft{isSoft}
+    Input() = delete;
+
+    explicit Input(Button button, bool pressed, ClickType clickType)
+        : m_button{button}, m_pressed{pressed}, m_clickType{clickType}
     {
     }
 
-    int getFrame() { return m_frame; }
-    bool is2Player() { return m_is2Player; }
-    int getButton() { return m_button; }
-    bool isDown() { return m_isDown; }
-    bool isSoft() { return m_isSoft; }
-    void setSoft(bool b) { m_isSoft = b; }
+    Button getButton() { return m_button; }
+    bool isPressed() { return m_pressed; }
+    ClickType getClickType() { return m_clickType; }
+    void setClickType(ClickType clickType) { m_clickType = clickType; }
 };

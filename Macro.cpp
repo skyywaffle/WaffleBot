@@ -9,7 +9,7 @@
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
 
-// File type is JSON, supports xdBot and MH Replay JSONs
+// File type is JSON, supports xdBot, MH Replay, and TASBot JSONs
 Macro::Macro(std::string filepath)
 {
     if (!fs::exists("config.json"))
@@ -19,9 +19,8 @@ Macro::Macro(std::string filepath)
     }
 
     Json clickConfig = Json::parse(std::ifstream("config.json"));
-    m_jsonData = Json::parse(std::ifstream{filepath});
+    Json macroData = Json::parse(std::ifstream{filepath});
     m_name = fs::path(filepath).filename().string();
-    std::string bot{};
 
     // Strip ".json" from filename
     for (int i{0}; i < 5; i++)
@@ -32,90 +31,152 @@ Macro::Macro(std::string filepath)
     // Determine what bot the macro comes from and set variables accordingly
 
     // Determine if macro is TASBot
-    if (m_jsonData.begin().key() == "fps") // TASBot has FPS as the first object
+    if (macroData.begin().key() == "fps") // TASBot has FPS as the first object
     {
-        bot = "TASBot";
+        bot = Bot::TASBOT;
     }
 
-    // Determine if macro is GDR and assign the bot name
-    else if (m_jsonData["bot"]["name"] != NULL)
+    // Determine if macro is GDR and assign bot
+    else if (macroData["bot"]["name"] != NULL)
     {
-        bot = m_jsonData["bot"]["name"];
+        if (macroData["bot"]["name"] == "MH_REPLAY")
+        {
+            bot = Bot::MH_REPLAY_GDR;
+        }
+
+        else if (macroData["bot"]["name"] == "xdBot")
+        {
+            bot = Bot::XDBOT_GDR;
+        }
+    }
+
+    // else the macro is not supported
+    else
+    {
+        std::cerr << "ERROR: " << m_name << " is either an unsupported macro or a corrupted one.\n";
+        return;
     }
 
     // Parse xdBot JSON macro
-    if (bot == "xdBot")
+    if (bot == Bot::XDBOT_GDR)
     {
-        m_framerate = m_jsonData["framerate"];
-        m_durationInSec = m_jsonData["duration"];
-        m_frameCount = static_cast<int>(std::round(m_durationInSec * m_framerate));
+        m_fps = macroData["framerate"];
+        double durationInSec = macroData["duration"];
+        m_frameCount = static_cast<int>(std::round(durationInSec * m_fps));
     }
 
     // Parse MH Replay JSON
-    else if (bot == "MH_REPLAY")
+    else if (bot == Bot::MH_REPLAY_GDR)
     {
-        m_framerate = 240; // Mega Hack Replay JSONs seem to only store time in 240fps frames, regardless of what FPS the macro was actually recorded at
-        m_frameCount = m_jsonData["duration"];
-        m_durationInSec = (double)m_frameCount / m_framerate;
+        m_fps = 240; // Mega Hack Replay JSONs seem to only store time in 240fps frames, regardless of what FPS the macro was actually recorded at
+        m_frameCount = macroData["duration"];
     }
 
     // Parse TASBot macro
-    else if (bot == "TASBot")
+    else if (bot == Bot::TASBOT)
     {
-        m_framerate = m_jsonData["fps"];
-        m_frameCount = m_jsonData["macro"][m_jsonData["macro"].size() - 1]["frame"]; // get the framecount from the last input of the macro
-        m_durationInSec = (double)m_frameCount / m_framerate;
+        m_fps = macroData["fps"];
+        m_frameCount = macroData["macro"][macroData["macro"].size() - 1]["frame"]; // get the framecount from the last input of the macro
     }
 
-    // Grab inputs for GDR JSON
-    if (bot == "xdBot" || bot == "MH_REPLAY")
+    // Grab actions from GDR JSON
+    if (bot == Bot::XDBOT_GDR || bot == Bot::MH_REPLAY_GDR)
     {
-        for (int index{0}; index < m_jsonData["inputs"].size(); index++)
+        for (Json &actionData : macroData["inputs"])
         {
-            m_inputs.push_back(Input(m_jsonData["inputs"][index]["frame"],
-                                     m_jsonData["inputs"][index]["2p"],
-                                     m_jsonData["inputs"][index]["btn"],
-                                     m_jsonData["inputs"][index]["down"],
-                                     false));
+            m_actions.push_back(Action(actionData, Bot::MH_REPLAY_GDR));
+        }
+
+        // Merge different actions on the same frame (happens if player 1 and player 2 make an action on the same frame)
+        for (int i{1}; i < m_actions.size(); i++)
+        {
+            if (m_actions[i].getFrame() == m_actions[i - 1].getFrame())
+            {
+                // Transfer player 2's inputs to the previous action, where there are no player 2 inputs
+                if (m_actions[i].getPlayerOneInputs().empty())
+                {
+                    m_actions[i - 1].setPlayerTwoInputs(m_actions[i].getPlayerTwoInputs());
+
+                    // Remove the now redundant action
+                    m_actions.erase(m_actions.begin() + i);
+                    i--;
+                }
+
+                // Else transfer player 1's inputs to the previous action, where there are no player 1 inputs
+                else if (m_actions[i].getPlayerTwoInputs().empty())
+                {
+                    m_actions[i - 1].setPlayerOneInputs(m_actions[i].getPlayerOneInputs());
+
+                    // Remove the now redundant action
+                    m_actions.erase(m_actions.begin() + i);
+                    i--;
+                }
+            }
         }
     }
 
     // Grab inputs for TASBot
-    else if (bot == "TASBot")
+    else if (bot == Bot::TASBOT)
     {
-        for (int index{0}; index < m_jsonData["macro"].size(); index++)
+        for (Json &actionData : macroData["macro"])
         {
-            int frame{m_jsonData["macro"][index]["frame"]};
-            bool twoPlayer{false};
-            int btn{1};
-            bool down{m_jsonData["macro"][index]["player_1"]["click"] == 1};
-            m_inputs.push_back(Input(frame, twoPlayer, btn, down, false));
+            m_actions.push_back(Action(actionData, Bot::TASBOT));
+        }
+
+        // We don't need to consider merging different actions on same frame, already taken care of in Action.cpp
+    }
+
+    // TODO: Determine clickType for each click
+
+    // Determine click type (for presses only)
+    for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction)
+    {
+        for (Input &currentInput : m_actions[currentAction].getPlayerOneInputs())
+        {
+            if (currentInput.isPressed())
+            {
+                for (int previousAction = currentAction - 1; previousAction >= 0; --previousAction)
+                {
+                    for (Input &previousInput : m_actions[previousAction].getPlayerOneInputs())
+                    {
+                        if (previousInput.getButton() == currentInput.getButton())
+                        {
+                            float softClickAfterReleaseTime = clickConfig["softclickAfterReleaseTime"];
+                            float frameDelta = m_actions[currentAction].getFrame() - m_actions[previousAction].getFrame();
+
+                            if (frameDelta < m_fps * softClickAfterReleaseTime)
+                            {
+                                currentInput.setClickType(ClickType::SOFT);
+                                goto ClickFound;
+                            }
+                        }
+                    }
+                }
+            ClickFound:;
+            }
         }
     }
 
-    // Determine soft clicks
-    // First click and release will always be normal
-    for (int index{2}; index < m_inputs.size(); index++)
+    // Assign release types based on previous press
+    for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction)
     {
-        // compare this with the previous click in the macro
-        if (m_inputs[index].isDown())
+        for (Input &currentInput : m_actions[currentAction].getPlayerOneInputs())
         {
-            // if time between this click and the previous click is less than user config time, make it soft
-            if (m_inputs[index].getFrame() - m_inputs[index - 2].getFrame() < m_framerate * clickConfig["softclickTime"].get<double>()) // because the indices are always click-release-click-release....
+            if (!currentInput.isPressed())
             {
-                m_inputs[index].setSoft(true);
+                for (int previousAction = currentAction - 1; previousAction >= 0; --previousAction)
+                {
+                    for (Input &previousInput : m_actions[previousAction].getPlayerOneInputs())
+                    {
+                        if (previousInput.getButton() == currentInput.getButton())
+                        {
+                            currentInput.setClickType(previousInput.getClickType());
+                            goto ReleaseFound;
+                        }
+                    }
+                }
+            ReleaseFound:;
             }
-
-            // if time between this click and the previous release is less than user config time, make it soft
-            else if (m_inputs[index].getFrame() - m_inputs[index - 1].getFrame() < m_framerate * clickConfig["softclickAfterReleaseTime"].get<double>()) // because the indices are always click-release-click-release....
-            {
-                m_inputs[index].setSoft(true);
-            }
-        }
-
-        else // released
-        {
-            m_inputs[index].setSoft(m_inputs[index - 1].isSoft()); // matching soft release for each soft click
         }
     }
 }
