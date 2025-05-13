@@ -126,8 +126,8 @@ Macro::Macro(std::string filepath)
         // We don't need to consider merging different actions on same frame, already taken care of in Action.cpp
     }
 
-    // TODO: Determine clickType for each click
-
+    
+    // CLICKTYPE FOR PLAYER 1 CLICKS
     // Determine click type (for presses only)
     for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction)
     {
@@ -147,12 +147,12 @@ Macro::Macro(std::string filepath)
                             if (frameDelta < m_fps * softClickAfterReleaseTime)
                             {
                                 currentInput.setClickType(ClickType::SOFT);
-                                goto ClickFound;
+                                goto p1ClickFound;
                             }
                         }
                     }
                 }
-            ClickFound:;
+            p1ClickFound:;
             }
         }
     }
@@ -171,11 +171,64 @@ Macro::Macro(std::string filepath)
                         if (previousInput.getButton() == currentInput.getButton())
                         {
                             currentInput.setClickType(previousInput.getClickType());
-                            goto ReleaseFound;
+                            goto p1ReleaseFound;
                         }
                     }
                 }
-            ReleaseFound:;
+            p1ReleaseFound:;
+            }
+        }
+    }
+
+    // CLICKTYPE FOR PLAYER 2 CLICKS
+    // Determine click type (for presses only)
+    for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction)
+    {
+        for (Input &currentInput : m_actions[currentAction].getPlayerTwoInputs())
+        {
+            if (currentInput.isPressed())
+            {
+                for (int previousAction = currentAction - 1; previousAction >= 0; --previousAction)
+                {
+                    for (Input &previousInput : m_actions[previousAction].getPlayerTwoInputs())
+                    {
+                        if (previousInput.getButton() == currentInput.getButton())
+                        {
+                            float softClickAfterReleaseTime = clickConfig["softclickAfterReleaseTime"];
+                            float frameDelta = m_actions[currentAction].getFrame() - m_actions[previousAction].getFrame();
+
+                            if (frameDelta < m_fps * softClickAfterReleaseTime)
+                            {
+                                currentInput.setClickType(ClickType::SOFT);
+                                goto p2ClickFound;
+                            }
+                        }
+                    }
+                }
+            p2ClickFound:;
+            }
+        }
+    }
+
+    // Assign release types based on previous press
+    for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction)
+    {
+        for (Input &currentInput : m_actions[currentAction].getPlayerTwoInputs())
+        {
+            if (!currentInput.isPressed())
+            {
+                for (int previousAction = currentAction - 1; previousAction >= 0; --previousAction)
+                {
+                    for (Input &previousInput : m_actions[previousAction].getPlayerTwoInputs())
+                    {
+                        if (previousInput.getButton() == currentInput.getButton())
+                        {
+                            currentInput.setClickType(previousInput.getClickType());
+                            goto p2ReleaseFound;
+                        }
+                    }
+                }
+            p2ReleaseFound:;
             }
         }
     }
