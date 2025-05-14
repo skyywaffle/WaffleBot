@@ -8,9 +8,6 @@ using Json = nlohmann::json;
 
 Action::Action(Json &actionData, Bot bot)
 {
-    // TODO: Use previous action parameter to figure out how to do soft click stuff and bullshit
-    //       Also figure out how to do the first action of a macro properly
-
     // Initialize relevant variables
     Button button{};
     bool isSecondPlayer{};
@@ -77,9 +74,9 @@ Action::Action(Json &actionData, Bot bot)
             bool pressed{actionData["player_2"]["click"] == 1};
 
             // Click type will be determined in Macro.cpp
-            Input playerOneInput{button, pressed, ClickType::NORMAL};
+            Input playerTwoInput{button, pressed, ClickType::NORMAL};
 
-            m_playerOneInputs.push_back(playerOneInput);
+            m_playerTwoInputs.push_back(playerTwoInput);
         }
     }
 }

@@ -91,46 +91,75 @@ void addToBuffer(std::vector<float> &inputTimes, std::vector<AudioFile> &files, 
 bool generateAudio(Macro &macro)
 {
     // Get click audio files
-    std::vector<AudioFile> clicks{getAudioFiles("player_1/clicks")};
-    std::vector<AudioFile> releases{getAudioFiles("player_1/releases")};
-    std::vector<AudioFile> softClicks{getAudioFiles("player_1/softclicks")};
-    std::vector<AudioFile> softReleases{getAudioFiles("player_1/softreleases")};
+    std::vector<AudioFile> p1Clicks{getAudioFiles("player_1/clicks")};
+    std::vector<AudioFile> p1Releases{getAudioFiles("player_1/releases")};
+    std::vector<AudioFile> p1SoftClicks{getAudioFiles("player_1/softclicks")};
+    std::vector<AudioFile> p1SoftReleases{getAudioFiles("player_1/softreleases")};
+
+    std::vector<AudioFile> p2Clicks{getAudioFiles("player_2/clicks")};
+    std::vector<AudioFile> p2Releases{getAudioFiles("player_2/releases")};
+    std::vector<AudioFile> p2SoftClicks{getAudioFiles("player_2/softclicks")};
+    std::vector<AudioFile> p2SoftReleases{getAudioFiles("player_2/softreleases")};
 
     // Check that clicks actually exist
-    if (clicks.size() == 0)
+    if (p1Clicks.size() == 0)
     {
-        std::cerr << "Error: clicks not found.\n";
+        std::cerr << "Error: P1 clicks not found.\n";
         return false;
     }
-    if (releases.size() == 0)
+    if (p1Releases.size() == 0)
     {
-        std::cout << "Warning: releases not found.\n";
+        std::cout << "Warning: P1 releases not found.\n";
     }
-    if (softClicks.size() == 0)
+    if (p1SoftClicks.size() == 0)
     {
-        std::cout << "Warning: softclicks not found, using normal clicks.\n";
-        softClicks = clicks;
+        std::cout << "Warning: P1 softclicks not found, using normal clicks.\n";
+        p1SoftClicks = p1Clicks;
     }
-    if (softReleases.size() == 0)
+    if (p1SoftReleases.size() == 0)
     {
-        std::cout << "Warning: softreleases not found, using normal releases.\n";
-        softReleases = releases;
+        std::cout << "Warning: P1 softreleases not found, using normal releases.\n";
+        p1SoftReleases = p1Releases;
+    }
+
+    if (p2Clicks.size() == 0)
+    {
+        std::cerr << "Error: P2 clicks not found.\n";
+        return false;
+    }
+    if (p2Releases.size() == 0)
+    {
+        std::cout << "Warning: P2 releases not found.\n";
+    }
+    if (p2SoftClicks.size() == 0)
+    {
+        std::cout << "Warning: P2 softclicks not found, using normal clicks.\n";
+        p2SoftClicks = p2Clicks;
+    }
+    if (p2SoftReleases.size() == 0)
+    {
+        std::cout << "Warning: P2 softreleases not found, using normal releases.\n";
+        p2SoftReleases = p2Releases;
     }
 
     // Define the total duration in seconds of the output file
     float durationSeconds = (float)macro.getFrameCount() / macro.getFps() + 2; // add an extra 2 seconds so no releases get cut off
-    int sampleRate = clicks[0].info.samplerate;
-    int channels = clicks[0].info.channels;
+    int sampleRate = p1Clicks[0].info.samplerate;
+    int channels = p1Clicks[0].info.channels;
     sf_count_t totalFrames = static_cast<sf_count_t>(durationSeconds * sampleRate);
     std::vector<short> outputBuffer(totalFrames * channels, 0); // Silent buffer
 
     // Define time points where clicks and releases (and soft clicks/releases) occur (in seconds)
-    std::vector<float> clickTimes{};
-    std::vector<float> releaseTimes{};
-    std::vector<float> softClickTimes{};
-    std::vector<float> softReleaseTimes{};
+    std::vector<float> p1ClickTimes{};
+    std::vector<float> p1ReleaseTimes{};
+    std::vector<float> p1SoftClickTimes{};
+    std::vector<float> p1SoftReleaseTimes{};
 
-    // Add the times of inputs to their corresponding vectors
+    std::vector<float> p2ClickTimes{};
+    std::vector<float> p2ReleaseTimes{};
+    std::vector<float> p2SoftClickTimes{};
+    std::vector<float> p2SoftReleaseTimes{};
+
     // Add the times of inputs to their corresponding vectors
     for (Action action : macro.getActions())
     {
@@ -140,37 +169,70 @@ bool generateAudio(Macro &macro)
             {
                 if (input.getClickType() == ClickType::NORMAL)
                 {
-                    clickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    p1ClickTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
 
                 else if (input.getClickType() == ClickType::SOFT)
                 {
-                    softClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    p1SoftClickTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
             }
             else
             {
                 if (input.getClickType() == ClickType::NORMAL)
                 {
-                    releaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    p1ReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
 
                 else if (input.getClickType() == ClickType::SOFT)
                 {
-                    softReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    p1SoftReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                }
+            }
+        }
+
+        for (Input input : action.getPlayerTwoInputs())
+        {
+            if (input.isPressed())
+            {
+                if (input.getClickType() == ClickType::NORMAL)
+                {
+                    p2ClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                }
+
+                else if (input.getClickType() == ClickType::SOFT)
+                {
+                    p2SoftClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                }
+            }
+            else
+            {
+                if (input.getClickType() == ClickType::NORMAL)
+                {
+                    p2ReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                }
+
+                else if (input.getClickType() == ClickType::SOFT)
+                {
+                    p2SoftReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
             }
         }
     }
 
     // Add click sounds to the output buffer
-    addToBuffer(clickTimes, clicks, outputBuffer, sampleRate, channels);
-    addToBuffer(releaseTimes, releases, outputBuffer, sampleRate, channels);
-    addToBuffer(softClickTimes, softClicks, outputBuffer, sampleRate, channels);
-    addToBuffer(softReleaseTimes, softReleases, outputBuffer, sampleRate, channels);
+    addToBuffer(p1ClickTimes, p1Clicks, outputBuffer, sampleRate, channels);
+    addToBuffer(p1ReleaseTimes, p1Releases, outputBuffer, sampleRate, channels);
+    addToBuffer(p1SoftClickTimes, p1SoftClicks, outputBuffer, sampleRate, channels);
+    addToBuffer(p1SoftReleaseTimes, p1SoftReleases, outputBuffer, sampleRate, channels);
+
+    addToBuffer(p2ClickTimes, p2Clicks, outputBuffer, sampleRate, channels);
+    addToBuffer(p2ReleaseTimes, p2Releases, outputBuffer, sampleRate, channels);
+    addToBuffer(p2SoftClickTimes, p2SoftClicks, outputBuffer, sampleRate, channels);
+    addToBuffer(p2SoftReleaseTimes, p2SoftReleases, outputBuffer, sampleRate, channels);
 
     // Write to new WAV file
-    SF_INFO sfinfoOut = clicks[0].info;
+    SF_INFO sfinfoOut = p1Clicks[0].info;
     sfinfoOut.frames = totalFrames;
     SNDFILE *outFile = sf_open(macro.getName().append(".wav").c_str(), SFM_WRITE, &sfinfoOut);
 
