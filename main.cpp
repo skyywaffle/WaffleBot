@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-// #define DEBUG
+#define DEBUG
 
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
