@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
 // Test a specific macro when looking to add more bot types, debug feature
 #ifdef DEBUG
-    Macro macro{"test2p.json"};
+    Macro macro{"Duelo Maestro Solo 62.gdr.json"};
     generateAudio(macro);
 #endif
 
