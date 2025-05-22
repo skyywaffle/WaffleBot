@@ -1,12 +1,13 @@
-#include "Macro.h"
-#include "Action.h"
-#include "Input.h"
-#include "AudioHandling.h"
-#include <nlohmann/json.hpp>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
+#include <nlohmann/json.hpp>
+
+#include "Action.h"
+#include "AudioHandling.h"
+#include "Input.h"
+#include "Macro.h"
 #define DEBUG
 
 using Json = nlohmann::json;
