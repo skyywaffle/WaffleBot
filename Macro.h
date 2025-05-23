@@ -20,7 +20,7 @@ class Macro
 {
 private:
     std::string m_name{};
-    Bot bot{};
+    Bot m_bot{};
     int m_fps{};
     int m_frameCount{};
     std::vector<Action> m_actions{};
@@ -30,6 +30,8 @@ public:
 
     int getFps() { return m_fps; }
     int getFrameCount() { return m_frameCount; }
+    bool isTwoPlayer();
+    Bot getBot() { return m_bot; }
     std::vector<Action> &getActions() { return m_actions; }
     std::string &getName() { return m_name; }
 };

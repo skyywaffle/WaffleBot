@@ -33,7 +33,7 @@ Macro::Macro(std::string filepath)
     // Determine if macro is TASBot
     if (macroData.begin().key() == "fps") // TASBot has FPS as the first object
     {
-        bot = Bot::TASBOT;
+        m_bot = Bot::TASBOT;
     }
 
     // Determine if macro is GDR and assign bot
@@ -41,12 +41,12 @@ Macro::Macro(std::string filepath)
     {
         if (macroData["bot"]["name"] == "MH_REPLAY")
         {
-            bot = Bot::MH_REPLAY_GDR;
+            m_bot = Bot::MH_REPLAY_GDR;
         }
 
         else if (macroData["bot"]["name"] == "xdBot")
         {
-            bot = Bot::XDBOT_GDR;
+            m_bot = Bot::XDBOT_GDR;
         }
     }
 
@@ -58,7 +58,7 @@ Macro::Macro(std::string filepath)
     }
 
     // Parse xdBot JSON macro
-    if (bot == Bot::XDBOT_GDR)
+    if (m_bot == Bot::XDBOT_GDR)
     {
         m_fps = macroData["framerate"];
         double durationInSec = macroData["duration"];
@@ -66,21 +66,21 @@ Macro::Macro(std::string filepath)
     }
 
     // Parse MH Replay JSON
-    else if (bot == Bot::MH_REPLAY_GDR)
+    else if (m_bot == Bot::MH_REPLAY_GDR)
     {
         m_fps = 240; // Mega Hack Replay JSONs seem to only store time in 240fps frames, regardless of what FPS the macro was actually recorded at
         m_frameCount = macroData["duration"];
     }
 
     // Parse TASBot macro
-    else if (bot == Bot::TASBOT)
+    else if (m_bot == Bot::TASBOT)
     {
         m_fps = macroData["fps"];
         m_frameCount = macroData["macro"][macroData["macro"].size() - 1]["frame"]; // get the framecount from the last input of the macro
     }
 
     // Grab actions from GDR JSON
-    if (bot == Bot::XDBOT_GDR || bot == Bot::MH_REPLAY_GDR)
+    if (m_bot == Bot::XDBOT_GDR || m_bot == Bot::MH_REPLAY_GDR)
     {
         for (Json &actionData : macroData["inputs"])
         {
@@ -116,7 +116,7 @@ Macro::Macro(std::string filepath)
     }
 
     // Grab inputs for TASBot
-    else if (bot == Bot::TASBOT)
+    else if (m_bot == Bot::TASBOT)
     {
         for (Json &actionData : macroData["macro"])
         {
@@ -232,4 +232,31 @@ Macro::Macro(std::string filepath)
             }
         }
     }
+
+    // For xdBot 2 player macros, 2p bool is flipped for some reason
+    // Swap player one and player two inputs if it's an xdBot 2p macro
+    if (isTwoPlayer() && m_bot == Bot::XDBOT_GDR) {
+        for (Action &action : m_actions) {
+            std::swap(action.getPlayerOneInputs(), action.getPlayerTwoInputs());
+        }
+    }
+}
+
+bool Macro::isTwoPlayer() {
+    bool onePlayerExists{false};
+    bool twoPlayerExists{false};
+
+    for (Action &action : m_actions) {
+        if (action.getPlayerOneInputs().size() > 0) {
+            onePlayerExists = true;
+        }
+        else if (action.getPlayerTwoInputs().size() > 0) {
+            twoPlayerExists = true;
+        }
+        if (onePlayerExists && twoPlayerExists) {
+            return true;
+        }
+    }
+    // Then it's not a two player macro
+    return false;
 }
