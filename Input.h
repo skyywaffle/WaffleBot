@@ -1,14 +1,13 @@
-#pragma once
+#ifndef INPUT_H
+#define INPUT_H
 
-enum class Button
-{
+enum class Button {
     JUMP = 1,
     LEFT = 2,
     RIGHT = 3,
 };
 
-enum class ClickType
-{
+enum class ClickType {
     VERY_SOFT,
     SOFT,
     NORMAL,
@@ -16,8 +15,7 @@ enum class ClickType
     VERY_HARD
 };
 
-class Input
-{
+class Input {
 private:
     Button m_button{};
     bool m_pressed{};
@@ -36,3 +34,4 @@ public:
     ClickType getClickType() { return m_clickType; }
     void setClickType(ClickType clickType) { m_clickType = clickType; }
 };
+#endif // INPUT_H

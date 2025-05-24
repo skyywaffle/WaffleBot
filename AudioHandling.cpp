@@ -1,31 +1,26 @@
 #include "AudioHandling.h"
-#include "Macro.h"
-#include "Input.h"
-#include <sndfile.h>
-#include <sndfile.hh>
-#include <iostream>
-#include <vector>
-#include <cstring>
+
 #include <filesystem>
+#include <iostream>
 #include <random>
-#include <algorithm>
+#include <sndfile.h>
+#include <vector>
+
+#include "Input.h"
+#include "Macro.h"
 
 namespace fs = std::filesystem;
 
-struct AudioFile
-{
+struct AudioFile {
     SF_INFO info;
     SNDFILE *file;
     std::vector<short> buffer;
 };
 
-void mix_click(std::vector<short> &outBuffer, const std::vector<short> &click, int insertIndex, int channels)
-{
-    for (size_t i = 0; i < click.size(); ++i)
-    {
+void mix_click(std::vector<short> &outBuffer, const std::vector<short> &click, int insertIndex, int channels) {
+    for (size_t i = 0; i < click.size(); ++i) {
         size_t outIndex = insertIndex + i;
-        if (outIndex < outBuffer.size())
-        {
+        if (outIndex < outBuffer.size()) {
             int mixed = outBuffer[outIndex] + click[i];
             // Clipping
             if (mixed > 32767)
@@ -37,18 +32,14 @@ void mix_click(std::vector<short> &outBuffer, const std::vector<short> &click, i
     }
 }
 
-std::vector<AudioFile> getAudioFiles(const char *folderName)
-{
+std::vector<AudioFile> getAudioFiles(const char *folderName) {
     std::vector<AudioFile> files{};
 
     fs::path folderPath{folderName};
-    if (fs::exists(folderPath) && fs::is_directory(folderPath))
-    {
-        for (const auto &item : fs::directory_iterator(folderPath))
-        {
+    if (fs::exists(folderPath) && fs::is_directory(folderPath)) {
+        for (const auto &item : fs::directory_iterator(folderPath)) {
             // Construct the filename and add a new AudioFile to the files vector
-            if (fs::is_regular_file(item))
-            {
+            if (fs::is_regular_file(item)) {
                 std::string fileString{folderName};
                 fileString.append("/");
                 fileString.append(item.path().filename().string());
@@ -63,18 +54,15 @@ std::vector<AudioFile> getAudioFiles(const char *folderName)
             }
         }
     }
-    else // if the folder name is invalid
-    {
+    else { // if the folder name is invalid
         std::cerr << "Could not find folder name: " << folderName << '\n';
     }
     return files;
 }
 
-void addToBuffer(std::vector<float> &inputTimes, std::vector<AudioFile> &files, std::vector<short> &buffer, int sampleRate, int channels)
-{
+void addToBuffer(std::vector<float> &inputTimes, std::vector<AudioFile> &files, std::vector<short> &buffer, int sampleRate, int channels) {
     // Add clicks to output buffer
-    for (float t : inputTimes)
-    {
+    for (float t : inputTimes) {
         // set up random index choice
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -88,8 +76,7 @@ void addToBuffer(std::vector<float> &inputTimes, std::vector<AudioFile> &files, 
 }
 
 // Returns whether audio generation succeeded
-bool generateAudio(Macro &macro)
-{
+bool generateAudio(Macro &macro) {
     // Get click audio files
     std::vector<AudioFile> p1Clicks{getAudioFiles("player_1/clicks")};
     std::vector<AudioFile> p1Releases{getAudioFiles("player_1/releases")};
@@ -102,42 +89,34 @@ bool generateAudio(Macro &macro)
     std::vector<AudioFile> p2SoftReleases{getAudioFiles("player_2/softreleases")};
 
     // Check that clicks actually exist
-    if (p1Clicks.size() == 0)
-    {
+    if (p1Clicks.size() == 0) {
         std::cerr << "Error: P1 clicks not found.\n";
         return false;
     }
-    if (p1Releases.size() == 0)
-    {
+    if (p1Releases.size() == 0) {
         std::cout << "Warning: P1 releases not found.\n";
     }
-    if (p1SoftClicks.size() == 0)
-    {
+    if (p1SoftClicks.size() == 0) {
         std::cout << "Warning: P1 softclicks not found, using normal clicks.\n";
         p1SoftClicks = p1Clicks;
     }
-    if (p1SoftReleases.size() == 0)
-    {
+    if (p1SoftReleases.size() == 0) {
         std::cout << "Warning: P1 softreleases not found, using normal releases.\n";
         p1SoftReleases = p1Releases;
     }
 
-    if (p2Clicks.size() == 0)
-    {
+    if (p2Clicks.size() == 0) {
         std::cerr << "Error: P2 clicks not found.\n";
         return false;
     }
-    if (p2Releases.size() == 0)
-    {
+    if (p2Releases.size() == 0) {
         std::cout << "Warning: P2 releases not found.\n";
     }
-    if (p2SoftClicks.size() == 0)
-    {
+    if (p2SoftClicks.size() == 0) {
         std::cout << "Warning: P2 softclicks not found, using normal clicks.\n";
         p2SoftClicks = p2Clicks;
     }
-    if (p2SoftReleases.size() == 0)
-    {
+    if (p2SoftReleases.size() == 0) {
         std::cout << "Warning: P2 softreleases not found, using normal releases.\n";
         p2SoftReleases = p2Releases;
     }
@@ -161,59 +140,40 @@ bool generateAudio(Macro &macro)
     std::vector<float> p2SoftReleaseTimes{};
 
     // Add the times of inputs to their corresponding vectors
-    for (Action action : macro.getActions())
-    {
-        for (Input input : action.getPlayerOneInputs())
-        {
-            if (input.isPressed())
-            {
-                if (input.getClickType() == ClickType::NORMAL)
-                {
+    for (Action action : macro.getActions()) {
+        for (Input input : action.getPlayerOneInputs()) {
+            if (input.isPressed()) {
+                if (input.getClickType() == ClickType::NORMAL) {
                     p1ClickTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
-
-                else if (input.getClickType() == ClickType::SOFT)
-                {
+                else if (input.getClickType() == ClickType::SOFT) {
                     p1SoftClickTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
             }
-            else
-            {
-                if (input.getClickType() == ClickType::NORMAL)
-                {
+            else {
+                if (input.getClickType() == ClickType::NORMAL) {
                     p1ReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
-
-                else if (input.getClickType() == ClickType::SOFT)
-                {
+                else if (input.getClickType() == ClickType::SOFT) {
                     p1SoftReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
             }
         }
 
-        for (Input input : action.getPlayerTwoInputs())
-        {
-            if (input.isPressed())
-            {
-                if (input.getClickType() == ClickType::NORMAL)
-                {
+        for (Input input : action.getPlayerTwoInputs()) {
+            if (input.isPressed()) {
+                if (input.getClickType() == ClickType::NORMAL) {
                     p2ClickTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
-
-                else if (input.getClickType() == ClickType::SOFT)
-                {
+                else if (input.getClickType() == ClickType::SOFT) {
                     p2SoftClickTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
             }
-            else
-            {
-                if (input.getClickType() == ClickType::NORMAL)
-                {
+            else {
+                if (input.getClickType() == ClickType::NORMAL) {
                     p2ReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
-
-                else if (input.getClickType() == ClickType::SOFT)
-                {
+                else if (input.getClickType() == ClickType::SOFT) {
                     p2SoftReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
                 }
             }
@@ -236,8 +196,7 @@ bool generateAudio(Macro &macro)
     sfinfoOut.frames = totalFrames;
     SNDFILE *outFile = sf_open(macro.getName().append(".wav").c_str(), SFM_WRITE, &sfinfoOut);
 
-    if (!outFile)
-    {
+    if (!outFile) {
         std::cerr << "Error creating output file for " << macro.getName() << '\n';
         return false;
     }

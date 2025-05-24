@@ -1,24 +1,22 @@
-#pragma once
+#ifndef MACRO_H
+#define MACRO_H
+#include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
-#include <string>
+
 #include "Action.h"
-#include "Input.h"
 
 class Action;
 
 using Json = nlohmann::json;
 
-enum class Bot
-{
+enum class Bot {
     XDBOT_GDR,
     MH_REPLAY_GDR,
     TASBOT,
 };
 
-class Macro
-{
-private:
+class Macro {
     std::string m_name{};
     Bot m_bot{};
     int m_fps{};
@@ -35,3 +33,4 @@ public:
     std::vector<Action> &getActions() { return m_actions; }
     std::string &getName() { return m_name; }
 };
+#endif // MACRO_H

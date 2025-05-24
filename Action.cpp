@@ -1,20 +1,20 @@
 #include "Action.h"
-#include "Input.h"
-#include "Macro.h"
-#include <nlohmann/json.hpp>
+
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
+
+#include "Input.h"
+#include "Macro.h"
 using Json = nlohmann::json;
 
-Action::Action(Json &actionData, Bot bot)
-{
+Action::Action(Json &actionData, Bot bot) {
     // Initialize relevant variables
     Button button{};
     bool isSecondPlayer{};
 
     // xdBot and Mega Hack 2.2 macros have identical input structures for this purpose
-    if (bot == Bot::XDBOT_GDR || bot == Bot::MH_REPLAY_GDR)
-    {
+    if (bot == Bot::XDBOT_GDR || bot == Bot::MH_REPLAY_GDR) {
         m_frame = actionData["frame"];
         isSecondPlayer = actionData["2p"];
         button = actionData["btn"];
@@ -23,18 +23,18 @@ Action::Action(Json &actionData, Bot bot)
         // Click type will be determined in Macro.cpp
         Input input{button, pressed, ClickType::NORMAL};
 
-        if (!isSecondPlayer)
+        if (!isSecondPlayer) {
             m_playerOneInputs.push_back(input);
-
-        else
+        }
+        else {
             m_playerTwoInputs.push_back(input);
+        }
 
         // if there are 2 input objects with the same frame, they'll be merged in Macro.cpp
         // (this happens when both players' inputs change on the same frame)
     }
 
-    else if (bot == Bot::TASBOT)
-    {
+    else if (bot == Bot::TASBOT) {
         m_frame = actionData["frame"];
 
         // TASBot stores both a player_1 and player_2 input object regardless of if both of them changed or just one
@@ -46,8 +46,7 @@ Action::Action(Json &actionData, Bot bot)
 
         // We can actually just add actions with both players here instead of having to merge elsewhere
         // TASBot stores presses and releases as 1 and 2 respectively in "click"
-        if (isBothPlayers)
-        {
+        if (isBothPlayers) {
             bool p1_pressed{actionData["player_1"]["click"] == 1};
             bool p2_pressed{actionData["player_2"]["click"] == 1};
 
@@ -58,9 +57,7 @@ Action::Action(Json &actionData, Bot bot)
             m_playerOneInputs.push_back(playerOneInput);
             m_playerTwoInputs.push_back(playerTwoInput);
         }
-
-        else if (!isSecondPlayer)
-        {
+        else if (!isSecondPlayer) {
             bool pressed{actionData["player_1"]["click"] == 1};
 
             // Click type will be determined in Macro.cpp
@@ -68,9 +65,7 @@ Action::Action(Json &actionData, Bot bot)
 
             m_playerOneInputs.push_back(playerOneInput);
         }
-
-        else
-        {
+        else {
             bool pressed{actionData["player_2"]["click"] == 1};
 
             // Click type will be determined in Macro.cpp
