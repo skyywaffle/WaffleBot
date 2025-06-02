@@ -8,6 +8,7 @@
 #include "AudioHandling.h"
 #include "Input.h"
 #include "Macro.h"
+#include "Timer.h"
 #define DEBUG
 
 using Json = nlohmann::json;
@@ -34,8 +35,11 @@ int main(int argc, char *argv[]) {
 
 // Test a specific macro, debug feature
 #ifdef DEBUG
+    Timer t;
     Macro macro{"Duelo Maestro Solo 62.gdr.json"};
     generateAudio(macro);
+    const double runtime {t.elapsed()};
+    std::cout << "Completed in " << runtime << " seconds.\n";
 #endif
 
     std::cout << "\nPress Enter to exit...";

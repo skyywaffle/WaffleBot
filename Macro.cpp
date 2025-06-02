@@ -91,8 +91,7 @@ Macro::Macro(std::string filepath) {
                     m_actions[i - 1].setPlayerOneInputs(m_actions[i].getPlayerOneInputs());
 
                     // Remove the now redundant action
-                    m_actions.erase(m_actions.begin() + i);
-                    i--;
+                    m_actions.erase(m_actions.begin() + i--);
                 }
             }
         }
@@ -106,7 +105,7 @@ Macro::Macro(std::string filepath) {
         // We don't need to consider merging different actions on same frame, already taken care of in Action.cpp
     }
 
-    
+    // TODO: Refactor this code and make it cleaner holy shit
     // CLICKTYPE FOR PLAYER 1 CLICKS
     // Determine click type (for presses only)
     for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction) {
@@ -213,4 +212,29 @@ bool Macro::isTwoPlayer() {
     }
     // Then it's not a two player macro
     return false;
+}
+
+void Macro::determineClickType(int player, bool click) {
+    // TODO: figure out how to make this clean
+
+    for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction) {
+        for (Input &currentInput : m_actions[currentAction].getPlayerOneInputs()) {
+            if (currentInput.isPressed()) {
+                for (int previousAction = currentAction - 1; previousAction >= 0; --previousAction) {
+                    for (Input &previousInput : m_actions[previousAction].getPlayerOneInputs()) {
+                        if (previousInput.getButton() == currentInput.getButton()) {
+                            float softClickAfterReleaseTime = clickConfig["softclickAfterReleaseTime"];
+                            float frameDelta = m_actions[currentAction].getFrame() - m_actions[previousAction].getFrame();
+
+                            if (frameDelta < m_fps * softClickAfterReleaseTime) {
+                                currentInput.setClickType(ClickType::SOFT);
+                                goto p1ClickFound;
+                            }
+                        }
+                    }
+                }
+                p1ClickFound:;
+            }
+        }
+    }
 }

@@ -32,5 +32,7 @@ public:
     Bot getBot() { return m_bot; }
     std::vector<Action> &getActions() { return m_actions; }
     std::string &getName() { return m_name; }
+
+    void determineClickType(int player, bool click);
 };
 #endif // MACRO_H
