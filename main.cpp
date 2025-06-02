@@ -10,7 +10,7 @@
 #include "Input.h"
 #include "Macro.h"
 #include "Timer.h"
-#define DEBUG
+// #define DEBUG
 
 using Json = nlohmann::json;
 namespace fs = std::filesystem;

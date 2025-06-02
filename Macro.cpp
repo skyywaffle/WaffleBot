@@ -23,11 +23,16 @@ Macro::Macro(const std::string& filepath) {
     }
 
     const Json& clickConfig {getClickConfig()};
-    Json macroData = Json::parse(std::ifstream{filepath});
+    ondemand::parser parser;
+    auto json = padded_string::load(filepath);
+    ondemand::document macroData = parser.iterate(json);
+
     m_name = fs::path(filepath).stem().string();
 
     // Determine what bot the macro comes from and set variables accordingly
+    m_bot = Bot::XDBOT_GDR;
 
+    /*
     // Determine if macro is TASBot
     if (macroData.begin().key() == "fps") { // TASBot has FPS as the first object
         m_bot = Bot::TASBOT;
@@ -48,14 +53,44 @@ Macro::Macro(const std::string& filepath) {
         std::cerr << "ERROR: " << m_name << " is either an unsupported macro or a corrupted one.\n";
         return;
     }
+    */
 
     // Parse xdBot JSON macro
     if (m_bot == Bot::XDBOT_GDR) {
-        m_fps = macroData["framerate"];
-        double durationInSec = macroData["duration"];
+        // Get framerate
+        ondemand::value framerate_val;
+        auto err = macroData["framerate"].get(framerate_val);
+        if (err) {
+            std::cerr << "Failed to get 'framerate' value: " << err << "\n";
+            std::exit(1);
+        }
+
+        double framerate_double;
+        err = framerate_val.get(framerate_double);
+        if (err) {
+            std::cerr << "Failed to parse 'framerate' as double: " << err << "\n";
+            std::exit(1);
+        }
+        m_fps = static_cast<int>(framerate_double);
+
+        // Get duration
+        ondemand::value duration_val;
+        err = macroData["duration"].get(duration_val);
+        if (err) {
+            std::cerr << "Failed to get 'duration' value: " << err << "\n";
+            std::exit(1);
+        }
+
+        double durationInSec;
+        err = duration_val.get(durationInSec);
+        if (err) {
+            std::cerr << "Failed to parse 'duration' as double: " << err << "\n";
+            std::exit(1);
+        }
+
         m_frameCount = static_cast<int>(std::round(durationInSec * m_fps));
     }
-
+    /* ! UNDO THIS WHEN I FIGURE OUT
     // Parse MH Replay JSON
     else if (m_bot == Bot::MH_REPLAY_GDR) {
         m_fps = 240; // Mega Hack Replay JSONs seem to only store time in 240fps frames, regardless of what FPS the macro was actually recorded at
@@ -67,12 +102,20 @@ Macro::Macro(const std::string& filepath) {
         m_fps = macroData["fps"];
         m_frameCount = macroData["macro"][macroData["macro"].size() - 1]["frame"]; // get the framecount from the last input of the macro
     }
+    */
 
     // Grab actions from GDR JSON
     if (m_bot == Bot::XDBOT_GDR || m_bot == Bot::MH_REPLAY_GDR) {
-        for (Json &actionData : macroData["inputs"]) {
-            m_actions.push_back(Action(actionData, Bot::MH_REPLAY_GDR));
+        auto inputs_result = macroData["inputs"].get_array();
+        if (inputs_result.error()) {
+            std::cerr << "Failed to read 'inputs' array: " << inputs_result.error() << "\n";
+            std::exit(1);
         }
+
+        for (auto actionData : inputs_result.value()) {
+            m_actions.emplace_back(actionData, Bot::MH_REPLAY_GDR);
+        }
+
 
         // Merge different actions on the same frame (happens if player 1 and player 2 make an action on the same frame)
         for (int i{1}; i < m_actions.size(); i++) {
@@ -98,7 +141,7 @@ Macro::Macro(const std::string& filepath) {
 
     // Grab inputs for TASBot
     else if (m_bot == Bot::TASBOT) {
-        for (Json &actionData : macroData["macro"]) {
+        for (auto actionData : macroData["macro"]) {
             m_actions.push_back(Action(actionData, Bot::TASBOT));
         }
         // We don't need to consider merging different actions on same frame, already taken care of in Action.cpp
