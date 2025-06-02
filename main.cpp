@@ -3,16 +3,18 @@
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
+#include <simdjson.h>
 
 #include "Action.h"
 #include "AudioHandling.h"
 #include "Input.h"
 #include "Macro.h"
 #include "Timer.h"
-// #define DEBUG
+#define DEBUG
 
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
+using namespace simdjson;
 
 int main(int argc, char *argv[]) {
     std::string versionNumber{"1.2.0"};
@@ -40,11 +42,8 @@ int main(int argc, char *argv[]) {
 
 // Test a specific macro, debug feature
 #ifdef DEBUG
-    Timer t;
     Macro macro{"Duelo Maestro Solo 62.gdr.json"};
     generateAudio(macro);
-    const double runtime {t.elapsed()};
-    std::cout << "Completed in " << runtime << " seconds.\n\n";
 #endif
 
     std::cout << "Total runtime: " << programTimer.elapsed() << " seconds\n\n";

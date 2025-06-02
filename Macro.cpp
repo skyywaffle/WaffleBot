@@ -10,6 +10,7 @@
 #include <simdjson.h>
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
+using namespace simdjson;
 
 bool Macro::s_configLoaded = false;
 Json Macro::s_clickConfig{};
