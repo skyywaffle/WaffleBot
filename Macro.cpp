@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
+#include <simdjson.h>
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
 

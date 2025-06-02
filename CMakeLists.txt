@@ -15,7 +15,9 @@ add_executable(WaffleBot main.cpp
         Input.h
         Macro.cpp
         Macro.h
-        Timer.h)
+        Timer.h
+        include/simdjson.cpp
+)
 
 # Link to libsndfile
 find_library(SNDFILE_LIB sndfile)
