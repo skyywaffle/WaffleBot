@@ -216,7 +216,7 @@ bool Macro::isTwoPlayer() {
 
 void Macro::determineClickType(int player, bool click) {
     // TODO: figure out how to make this clean
-
+    /*
     for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction) {
         for (Input &currentInput : m_actions[currentAction].getPlayerOneInputs()) {
             if (currentInput.isPressed()) {
@@ -237,4 +237,5 @@ void Macro::determineClickType(int player, bool click) {
             }
         }
     }
+    */
 }
