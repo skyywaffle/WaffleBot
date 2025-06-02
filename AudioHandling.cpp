@@ -77,18 +77,24 @@ void addToBuffer(std::vector<float> &inputTimes, std::vector<AudioFile> &files, 
 
 // Returns whether audio generation succeeded
 bool generateAudio(Macro &macro) {
+    bool isTwoPlayerMacro {macro.isTwoPlayer()};
+
+    std::vector<AudioFile> p1Clicks{};
+    std::vector<AudioFile> p1Releases{};
+    std::vector<AudioFile> p1SoftClicks{};
+    std::vector<AudioFile> p1SoftReleases{};
+
+    std::vector<AudioFile> p2Clicks{};
+    std::vector<AudioFile> p2Releases{};
+    std::vector<AudioFile> p2SoftClicks{};
+    std::vector<AudioFile> p2SoftReleases{};
+
     // Get click audio files
-    std::vector<AudioFile> p1Clicks{getAudioFiles("player_1/clicks")};
-    std::vector<AudioFile> p1Releases{getAudioFiles("player_1/releases")};
-    std::vector<AudioFile> p1SoftClicks{getAudioFiles("player_1/softclicks")};
-    std::vector<AudioFile> p1SoftReleases{getAudioFiles("player_1/softreleases")};
+    p1Clicks = getAudioFiles("player_1/clicks");
+    p1Releases = getAudioFiles("player_1/releases");
+    p1SoftClicks = getAudioFiles("player_1/softclicks");
+    p1SoftReleases = getAudioFiles("player_1/softreleases");
 
-    std::vector<AudioFile> p2Clicks{getAudioFiles("player_2/clicks")};
-    std::vector<AudioFile> p2Releases{getAudioFiles("player_2/releases")};
-    std::vector<AudioFile> p2SoftClicks{getAudioFiles("player_2/softclicks")};
-    std::vector<AudioFile> p2SoftReleases{getAudioFiles("player_2/softreleases")};
-
-    // Check that clicks actually exist
     if (p1Clicks.size() == 0) {
         std::cerr << "Error: P1 clicks not found.\n";
         return false;
@@ -105,20 +111,27 @@ bool generateAudio(Macro &macro) {
         p1SoftReleases = p1Releases;
     }
 
-    if (p2Clicks.size() == 0) {
-        std::cerr << "Error: P2 clicks not found.\n";
-        return false;
-    }
-    if (p2Releases.size() == 0) {
-        std::cout << "Warning: P2 releases not found.\n";
-    }
-    if (p2SoftClicks.size() == 0) {
-        std::cout << "Warning: P2 softclicks not found, using normal clicks.\n";
-        p2SoftClicks = p2Clicks;
-    }
-    if (p2SoftReleases.size() == 0) {
-        std::cout << "Warning: P2 softreleases not found, using normal releases.\n";
-        p2SoftReleases = p2Releases;
+    if (isTwoPlayerMacro) {
+        p2Clicks = getAudioFiles("player_2/clicks");
+        p2Releases = getAudioFiles("player_2/releases");
+        p2SoftClicks = getAudioFiles("player_2/softclicks");
+        p2SoftReleases = getAudioFiles("player_2/softreleases");
+
+        if (p2Clicks.size() == 0) {
+            std::cerr << "Error: P2 clicks not found.\n";
+            return false;
+        }
+        if (p2Releases.size() == 0) {
+            std::cout << "Warning: P2 releases not found.\n";
+        }
+        if (p2SoftClicks.size() == 0) {
+            std::cout << "Warning: P2 softclicks not found, using normal clicks.\n";
+            p2SoftClicks = p2Clicks;
+        }
+        if (p2SoftReleases.size() == 0) {
+            std::cout << "Warning: P2 softreleases not found, using normal releases.\n";
+            p2SoftReleases = p2Releases;
+        }
     }
 
     // Define the total duration in seconds of the output file
@@ -160,21 +173,23 @@ bool generateAudio(Macro &macro) {
             }
         }
 
-        for (Input input : action.getPlayerTwoInputs()) {
-            if (input.isPressed()) {
-                if (input.getClickType() == ClickType::NORMAL) {
-                    p2ClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+        if (isTwoPlayerMacro) {
+            for (Input input : action.getPlayerTwoInputs()) {
+                if (input.isPressed()) {
+                    if (input.getClickType() == ClickType::NORMAL) {
+                        p2ClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    }
+                    else if (input.getClickType() == ClickType::SOFT) {
+                        p2SoftClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    }
                 }
-                else if (input.getClickType() == ClickType::SOFT) {
-                    p2SoftClickTimes.push_back(action.getFrame() / (float)macro.getFps());
-                }
-            }
-            else {
-                if (input.getClickType() == ClickType::NORMAL) {
-                    p2ReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
-                }
-                else if (input.getClickType() == ClickType::SOFT) {
-                    p2SoftReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                else {
+                    if (input.getClickType() == ClickType::NORMAL) {
+                        p2ReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    }
+                    else if (input.getClickType() == ClickType::SOFT) {
+                        p2SoftReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    }
                 }
             }
         }
@@ -186,25 +201,28 @@ bool generateAudio(Macro &macro) {
     addToBuffer(p1SoftClickTimes, p1SoftClicks, outputBuffer, sampleRate, channels);
     addToBuffer(p1SoftReleaseTimes, p1SoftReleases, outputBuffer, sampleRate, channels);
 
-    addToBuffer(p2ClickTimes, p2Clicks, outputBuffer, sampleRate, channels);
-    addToBuffer(p2ReleaseTimes, p2Releases, outputBuffer, sampleRate, channels);
-    addToBuffer(p2SoftClickTimes, p2SoftClicks, outputBuffer, sampleRate, channels);
-    addToBuffer(p2SoftReleaseTimes, p2SoftReleases, outputBuffer, sampleRate, channels);
+    if (isTwoPlayerMacro) {
+        addToBuffer(p2ClickTimes, p2Clicks, outputBuffer, sampleRate, channels);
+        addToBuffer(p2ReleaseTimes, p2Releases, outputBuffer, sampleRate, channels);
+        addToBuffer(p2SoftClickTimes, p2SoftClicks, outputBuffer, sampleRate, channels);
+        addToBuffer(p2SoftReleaseTimes, p2SoftReleases, outputBuffer, sampleRate, channels);
+    }
 
     // Write to new WAV file
     SF_INFO sfinfoOut = p1Clicks[0].info;
     sfinfoOut.frames = totalFrames;
-    SNDFILE *outFile = sf_open(macro.getName().append(".wav").c_str(), SFM_WRITE, &sfinfoOut);
+    std::string macroName {macro.getModifiableName()};
+    SNDFILE *outFile = sf_open(macroName.append(".wav").c_str(), SFM_WRITE, &sfinfoOut);
 
     if (!outFile) {
-        std::cerr << "Error creating output file for " << macro.getName() << '\n';
+        std::cerr << "Error creating output file for " << macroName << '\n';
         return false;
     }
 
     sf_write_short(outFile, outputBuffer.data(), outputBuffer.size());
     sf_close(outFile);
 
-    std::cout << "Successfully generated clicks for " << macro.getName() << '\n';
+    std::cout << "Successfully generated clicks for " << macroName << '\n';
 
     return true;
 }

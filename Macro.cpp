@@ -10,21 +10,19 @@
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
 
+bool Macro::s_configLoaded = false;
+Json Macro::s_clickConfig{};
+
 // File type is JSON, supports xdBot, MH Replay, and TASBot JSONs
-Macro::Macro(std::string filepath) {
+Macro::Macro(const std::string& filepath) {
     if (!fs::exists("config.json")) {
         std::cerr << "No config JSON found!\n";
         std::exit(1);
     }
 
-    Json clickConfig = Json::parse(std::ifstream("config.json"));
+    const Json& clickConfig {getClickConfig()};
     Json macroData = Json::parse(std::ifstream{filepath});
-    m_name = fs::path(filepath).filename().string();
-
-    // Strip ".json" from filename
-    for (int i{0}; i < 5; i++) {
-        m_name.pop_back();
-    }
+    m_name = fs::path(filepath).stem().string();
 
     // Determine what bot the macro comes from and set variables accordingly
 
@@ -82,8 +80,7 @@ Macro::Macro(std::string filepath) {
                     m_actions[i - 1].setPlayerTwoInputs(m_actions[i].getPlayerTwoInputs());
 
                     // Remove the now redundant action
-                    m_actions.erase(m_actions.begin() + i);
-                    i--;
+                    m_actions.erase(m_actions.begin() + i--);
                 }
 
                 // Else transfer player 1's inputs to the previous action, where there are no player 1 inputs
@@ -196,25 +193,16 @@ Macro::Macro(std::string filepath) {
 }
 
 bool Macro::isTwoPlayer() {
-    bool onePlayerExists{false};
-    bool twoPlayerExists{false};
+    bool hasPlayer1 = std::any_of(m_actions.begin(), m_actions.end(),
+        [](Action& a) { return !a.getPlayerOneInputs().empty(); });
 
-    for (Action &action : m_actions) {
-        if (action.getPlayerOneInputs().size() > 0) {
-            onePlayerExists = true;
-        }
-        else if (action.getPlayerTwoInputs().size() > 0) {
-            twoPlayerExists = true;
-        }
-        if (onePlayerExists && twoPlayerExists) {
-            return true;
-        }
-    }
-    // Then it's not a two player macro
-    return false;
+    bool hasPlayer2 = std::any_of(m_actions.begin(), m_actions.end(),
+        [](Action& a) { return !a.getPlayerTwoInputs().empty(); });
+
+    return hasPlayer1 && hasPlayer2;
 }
 
-void Macro::determineClickType(int player, bool click) {
+void Macro::determineClickType() {
     // TODO: figure out how to make this clean
     /*
     for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction) {
