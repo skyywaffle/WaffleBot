@@ -26,11 +26,11 @@ int main(int argc, char *argv[]) {
         fs::current_path(fs::canonical(argv[0]).parent_path());
 
         for (std::size_t arg{1}; arg < argc; arg++) {
-            Timer t;
+            // Timer t;
             Macro macro{argv[arg]};
             generateAudio(macro);
-            const double runtime {t.elapsed()};
-            std::cout << "Completed in " << runtime << " seconds.\n\n";
+            // const double runtime {t.elapsed()};
+            // std::cout << "Completed in " << runtime << " seconds.\n\n";
         }
     }
     else {
