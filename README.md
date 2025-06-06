@@ -11,5 +11,3 @@ Compatible with both Windows and Linux x86-64.
 Drag macros you want to generate clicks for on top of the .exe. Audio file(s) will appear in the same directory as the program.
 ### Linux
 Launch the executable in a terminal, passing the filepaths of each macro as command-line arguments.
-## Building info
-Make sure to have external includes set to the /include folder and have -lsndfile as a command-line argument when building.
