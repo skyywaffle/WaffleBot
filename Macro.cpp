@@ -6,54 +6,63 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <nlohmann/json.hpp>
 #include <simdjson.h>
-using Json = nlohmann::json;
+
 namespace fs = std::filesystem;
 using namespace simdjson;
+using namespace std::string_view_literals;
 
-bool Macro::s_configLoaded = false;
-Json Macro::s_clickConfig{};
 
 // File type is JSON, supports xdBot, MH Replay, and TASBot JSONs
 Macro::Macro(const std::string& filepath) {
-    if (!fs::exists("config.json")) {
-        std::cerr << "No config JSON found!\n";
-        std::exit(1);
-    }
-
-    const Json& clickConfig {getClickConfig()};
-    ondemand::parser parser;
-    auto json = padded_string::load(filepath);
-    ondemand::document macroData = parser.iterate(json);
-
     m_name = fs::path(filepath).stem().string();
+    m_macroBuffer = padded_string::load(filepath);
 
-    // Determine what bot the macro comes from and set variables accordingly
-    m_bot = Bot::XDBOT_GDR;
+    determineBotType();
+    parseMacroJson();
+    determineClickTypes();
+}
 
-    /*
-    // Determine if macro is TASBot
-    if (macroData.begin().key() == "fps") { // TASBot has FPS as the first object
-        m_bot = Bot::TASBOT;
-    }
+ondemand::document Macro::getMacroData() {
+    return m_parser.iterate(m_macroBuffer);
+}
 
-    // Determine if macro is GDR and assign bot
-    else if (macroData["bot"]["name"] != NULL) {
-        if (macroData["bot"]["name"] == "MH_REPLAY") {
+void Macro::determineBotType() {
+    auto macroData = getMacroData();
+
+    if (auto botName = macroData["bot"]["name"].get_string(); !botName.error()) {
+        if (botName.value() == "MH_REPLAY"sv) {
             m_bot = Bot::MH_REPLAY_GDR;
         }
-        else if (macroData["bot"]["name"] == "xdBot") {
+        else if (botName.value() == "xdBot"sv) {
             m_bot = Bot::XDBOT_GDR;
         }
+        return;
+    }
+
+    // Determine if macro is TASBot
+    // TASBot has "fps" as the first key-value pair
+
+    // Re-parse document
+    macroData = getMacroData();
+
+    auto macroObject = macroData.get_object();
+
+    for (auto field : macroObject) {
+        if (field.key() == "fps") {
+            m_bot = Bot::TASBOT;
+            return;
+        }
+        break;
     }
 
     // else the macro is not supported
-    else {
-        std::cerr << "ERROR: " << m_name << " is either an unsupported macro or a corrupted one.\n";
-        return;
-    }
-    */
+    std::cerr << "ERROR: " << m_name << " is either an unsupported macro or a corrupted one.\n";
+    std::exit(1);
+}
+
+void Macro::parseMacroJson() {
+    auto macroData = getMacroData();
 
     // Parse xdBot JSON macro
     if (m_bot == Bot::XDBOT_GDR) {
@@ -90,19 +99,26 @@ Macro::Macro(const std::string& filepath) {
 
         m_frameCount = static_cast<int>(std::round(durationInSec * m_fps));
     }
-    /* ! UNDO THIS WHEN I FIGURE OUT
+
     // Parse MH Replay JSON
     else if (m_bot == Bot::MH_REPLAY_GDR) {
         m_fps = 240; // Mega Hack Replay JSONs seem to only store time in 240fps frames, regardless of what FPS the macro was actually recorded at
-        m_frameCount = macroData["duration"];
+        m_frameCount = static_cast<int>(macroData["duration"].get_int64());
     }
 
     // Parse TASBot macro
     else if (m_bot == Bot::TASBOT) {
-        m_fps = macroData["fps"];
-        m_frameCount = macroData["macro"][macroData["macro"].size() - 1]["frame"]; // get the framecount from the last input of the macro
+        m_fps = static_cast<int>(macroData["fps"].get_double());
+
+        auto macroArray = macroData["macro"].get_array();
+        int lastFrame = 0;
+
+        for (auto element : macroArray) {
+            lastFrame = static_cast<int>(element.value()["frame"].get_int64());
+        }
+
+        m_frameCount = lastFrame;
     }
-    */
 
     // Grab actions from GDR JSON
     if (m_bot == Bot::XDBOT_GDR || m_bot == Bot::MH_REPLAY_GDR) {
@@ -141,98 +157,73 @@ Macro::Macro(const std::string& filepath) {
 
     // Grab inputs for TASBot
     else if (m_bot == Bot::TASBOT) {
-        for (auto actionData : macroData["macro"]) {
-            m_actions.push_back(Action(actionData, Bot::TASBOT));
+        auto inputs_result = macroData["macro"].get_array();
+        if (inputs_result.error()) {
+            std::cerr << "Failed to read 'inputs' array: " << inputs_result.error() << "\n";
+            std::exit(1);
+        }
+
+        for (auto actionData : inputs_result.value()) {
+            m_actions.emplace_back(actionData, Bot::TASBOT);
         }
         // We don't need to consider merging different actions on same frame, already taken care of in Action.cpp
     }
+}
 
-    // TODO: Refactor this code and make it cleaner holy shit
-    // CLICKTYPE FOR PLAYER 1 CLICKS
-    // Determine click type (for presses only)
-    for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction) {
-        for (Input &currentInput : m_actions[currentAction].getPlayerOneInputs()) {
-            if (currentInput.isPressed()) {
-                for (int previousAction = currentAction - 1; previousAction >= 0; --previousAction) {
-                    for (Input &previousInput : m_actions[previousAction].getPlayerOneInputs()) {
-                        if (previousInput.getButton() == currentInput.getButton()) {
-                            float softClickAfterReleaseTime = clickConfig["softclickAfterReleaseTime"];
-                            float frameDelta = m_actions[currentAction].getFrame() - m_actions[previousAction].getFrame();
+void Macro::determineClickTypes() {
+    static padded_string clickConfigBuffer = padded_string::load("config.json");
+    static ondemand::parser parser;
+    static auto clickConfig = parser.iterate(clickConfigBuffer);
+    static double softClickTime = clickConfig["softclickTime"].get_double();
+    static double softClickAfterReleaseTime = clickConfig["softclickAfterReleaseTime"].get_double();
 
-                            if (frameDelta < m_fps * softClickAfterReleaseTime) {
-                                currentInput.setClickType(ClickType::SOFT);
-                                goto p1ClickFound;
-                            }
-                        }
+    std::array<int, 3> p1lastButtonFrame{};
+    std::array<bool, 3> p1isFirstButtonInput{true, true, true};
+    std::array<ClickType, 3> p1LastButtonType{ClickType::NORMAL, ClickType::NORMAL, ClickType::NORMAL};
+
+    std::array<int, 3> p2lastButtonFrame{};
+    std::array<bool, 3> p2isFirstButtonInput{true, true, true};
+    std::array<ClickType, 3> p2LastButtonType{ClickType::NORMAL, ClickType::NORMAL, ClickType::NORMAL};
+
+
+    for (Action& action : m_actions) {
+        int currentFrame = action.getFrame();
+
+        for (Input& input : action.getPlayerOneInputs()) {
+            int button = static_cast<int>(input.getButton());
+
+            if (!p1isFirstButtonInput[button]) {
+                if (input.isPressed()) {
+                    double timeDelta = static_cast<double>(currentFrame - p1lastButtonFrame[button]) / m_fps;
+
+                    if (timeDelta < softClickAfterReleaseTime || timeDelta < softClickTime) {
+                        input.setClickType(ClickType::SOFT);
                     }
+                } else {
+                    input.setClickType(p1LastButtonType[button]);
                 }
-            p1ClickFound:;
+                p1lastButtonFrame[button] = currentFrame;
+            } else {
+                p1lastButtonFrame[button] = currentFrame;
             }
         }
-    }
+        for (Input& input : action.getPlayerTwoInputs()) {
+            int button = static_cast<int>(input.getButton());
 
-    // Assign release types based on previous press
-    for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction) {
-        for (Input &currentInput : m_actions[currentAction].getPlayerOneInputs()) {
-            if (!currentInput.isPressed()) {
-                for (int previousAction = currentAction - 1; previousAction >= 0; --previousAction) {
-                    for (Input &previousInput : m_actions[previousAction].getPlayerOneInputs()) {
-                        if (previousInput.getButton() == currentInput.getButton()) {
-                            currentInput.setClickType(previousInput.getClickType());
-                            goto p1ReleaseFound;
-                        }
+            if (!p2isFirstButtonInput[button]) {
+                if (input.isPressed()) {
+                    double timeDelta = static_cast<double>(currentFrame - p2lastButtonFrame[button]) / m_fps;
+
+                    if (timeDelta < softClickAfterReleaseTime || timeDelta < softClickTime) {
+                        input.setClickType(ClickType::SOFT);
                     }
+                } else {
+                    input.setClickType(p2LastButtonType[button]);
                 }
-            p1ReleaseFound:;
+                p2lastButtonFrame[button] = currentFrame;
+            } else {
+                p2lastButtonFrame[button] = currentFrame;
             }
-        }
-    }
-
-    // CLICKTYPE FOR PLAYER 2 CLICKS
-    // Determine click type (for presses only)
-    for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction) {
-        for (Input &currentInput : m_actions[currentAction].getPlayerTwoInputs()) {
-            if (currentInput.isPressed()) {
-                for (int previousAction = currentAction - 1; previousAction >= 0; --previousAction) {
-                    for (Input &previousInput : m_actions[previousAction].getPlayerTwoInputs()) {
-                        if (previousInput.getButton() == currentInput.getButton()) {
-                            float softClickAfterReleaseTime = clickConfig["softclickAfterReleaseTime"];
-                            float frameDelta = m_actions[currentAction].getFrame() - m_actions[previousAction].getFrame();
-
-                            if (frameDelta < m_fps * softClickAfterReleaseTime) {
-                                currentInput.setClickType(ClickType::SOFT);
-                                goto p2ClickFound;
-                            }
-                        }
-                    }
-                }
-            p2ClickFound:;
-            }
-        }
-    }
-
-    // Assign release types based on previous press
-    for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction) {
-        for (Input &currentInput : m_actions[currentAction].getPlayerTwoInputs()) {
-            if (!currentInput.isPressed()) {
-                for (int previousAction = currentAction - 1; previousAction >= 0; --previousAction) {
-                    for (Input &previousInput : m_actions[previousAction].getPlayerTwoInputs()) {
-                        if (previousInput.getButton() == currentInput.getButton()) {
-                            currentInput.setClickType(previousInput.getClickType());
-                            goto p2ReleaseFound;
-                        }
-                    }
-                }
-            p2ReleaseFound:;
-            }
-        }
-    }
-
-    // For xdBot 2 player macros, 2p bool is flipped for some reason
-    // Swap player one and player two inputs if it's an xdBot 2p macro
-    if (isTwoPlayer() && m_bot == Bot::XDBOT_GDR) {
-        for (Action &action : m_actions) {
-            std::swap(action.getPlayerOneInputs(), action.getPlayerTwoInputs());
         }
     }
 }
@@ -245,30 +236,4 @@ bool Macro::isTwoPlayer() {
         [](Action& a) { return !a.getPlayerTwoInputs().empty(); });
 
     return hasPlayer1 && hasPlayer2;
-}
-
-void Macro::determineClickType() {
-    // TODO: figure out how to make this clean
-    /*
-    for (int currentAction = 0; currentAction < m_actions.size(); ++currentAction) {
-        for (Input &currentInput : m_actions[currentAction].getPlayerOneInputs()) {
-            if (currentInput.isPressed()) {
-                for (int previousAction = currentAction - 1; previousAction >= 0; --previousAction) {
-                    for (Input &previousInput : m_actions[previousAction].getPlayerOneInputs()) {
-                        if (previousInput.getButton() == currentInput.getButton()) {
-                            float softClickAfterReleaseTime = clickConfig["softclickAfterReleaseTime"];
-                            float frameDelta = m_actions[currentAction].getFrame() - m_actions[previousAction].getFrame();
-
-                            if (frameDelta < m_fps * softClickAfterReleaseTime) {
-                                currentInput.setClickType(ClickType::SOFT);
-                                goto p1ClickFound;
-                            }
-                        }
-                    }
-                }
-                p1ClickFound:;
-            }
-        }
-    }
-    */
 }

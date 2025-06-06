@@ -2,15 +2,13 @@
 #define MACRO_H
 #include <string>
 #include <vector>
-#include <fstream>
-#include <nlohmann/json.hpp>
 #include <simdjson.h>
 
 #include "Action.h"
 
 class Action;
 
-using Json = nlohmann::json;
+using namespace simdjson;
 
 enum class Bot {
     XDBOT_GDR,
@@ -24,11 +22,12 @@ class Macro {
     int m_fps{};
     int m_frameCount{};
     std::vector<Action> m_actions{};
-    static Json s_clickConfig;
-    static bool s_configLoaded;
+
+    padded_string m_macroBuffer;
+    ondemand::parser m_parser;
 
 public:
-    explicit Macro(const std::string& filename);
+    explicit Macro(const std::string& filepath);
 
     // START OF GETTERS AND SETTERS
     const std::string& getName() const { return m_name; }
@@ -47,18 +46,13 @@ public:
     std::vector<Action>& getActions() { return m_actions; }
     void setActions(const std::vector<Action>& actions) { m_actions = actions; }
 
-    static const Json& getClickConfig() {
-        if (!s_configLoaded) {
-            s_clickConfig = Json::parse(std::ifstream("config.json"));
-            s_configLoaded = true;
-        }
-        return s_clickConfig;
-    }
+    ondemand::document getMacroData();
+
     // END OF GETTERS AND SETTERS
 
+    void determineBotType();
+    void parseMacroJson();
+    void determineClickTypes();
     bool isTwoPlayer();
-
-    void loadClickConfig();
-    void determineClickType();
 };
 #endif // MACRO_H

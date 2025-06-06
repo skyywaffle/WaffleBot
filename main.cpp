@@ -1,23 +1,19 @@
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <vector>
-#include <nlohmann/json.hpp>
 #include <simdjson.h>
 
-#include "Action.h"
 #include "AudioHandling.h"
-#include "Input.h"
 #include "Macro.h"
 #include "Timer.h"
 // #define DEBUG
 
-using Json = nlohmann::json;
 namespace fs = std::filesystem;
 using namespace simdjson;
 
 int main(int argc, char *argv[]) {
-    std::string versionNumber{"1.2.0"};
+    std::string versionNumber{"1.3.0"};
     std::cout << "WaffleBot " << versionNumber << " by skyywaffle\n\n";
 
     Timer programTimer;
@@ -42,7 +38,7 @@ int main(int argc, char *argv[]) {
 
 // Test a specific macro, debug feature
 #ifdef DEBUG
-    Macro macro{"Duelo Maestro Solo 62.gdr.json"};
+    Macro macro{"Acheron.gdr.json"};
     generateAudio(macro);
 #endif
 

@@ -1,13 +1,10 @@
 #ifndef ACTION_H
 #define ACTION_H
-#include <string>
 #include <vector>
-#include <nlohmann/json.hpp>
 #include <simdjson.h>
 
 #include "Input.h"
 #include "Macro.h"
-using Json = nlohmann::json;
 using namespace simdjson;
 
 enum class Bot;
