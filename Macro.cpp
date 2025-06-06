@@ -205,6 +205,7 @@ void Macro::determineClickTypes() {
                 p1lastButtonFrame[button] = currentFrame;
             } else {
                 p1lastButtonFrame[button] = currentFrame;
+                p1isFirstButtonInput[button] = false;
             }
         }
         for (Input& input : action.getPlayerTwoInputs()) {
@@ -223,6 +224,7 @@ void Macro::determineClickTypes() {
                 p2lastButtonFrame[button] = currentFrame;
             } else {
                 p2lastButtonFrame[button] = currentFrame;
+                p2isFirstButtonInput[button] = false;
             }
         }
     }
