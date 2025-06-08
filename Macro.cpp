@@ -21,6 +21,11 @@ Macro::Macro(const std::string& filepath) {
     determineBotType();
     parseMacroJson();
     determineClickTypes();
+
+    // xdBot has the wrong 2p bool if it's a 2 player macro
+    if (isTwoPlayer() && getBot() == Bot::XDBOT_GDR) {
+        swapPlayerOneAndTwoActions();
+    }
 }
 
 ondemand::document Macro::getMacroData() {
@@ -238,4 +243,10 @@ bool Macro::isTwoPlayer() {
         [](Action& a) { return !a.getPlayerTwoInputs().empty(); });
 
     return hasPlayer1 && hasPlayer2;
+}
+
+void Macro::swapPlayerOneAndTwoActions() {
+    for (Action& action : m_actions) {
+        std::swap(action.getPlayerOneInputs(), action.getPlayerTwoInputs());
+    }
 }

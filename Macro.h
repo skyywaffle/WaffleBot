@@ -54,5 +54,6 @@ public:
     void parseMacroJson();
     void determineClickTypes();
     bool isTwoPlayer();
+    void swapPlayerOneAndTwoActions();
 };
 #endif // MACRO_H
