@@ -78,6 +78,7 @@ void addToBuffer(std::vector<float> &inputTimes, std::vector<AudioFile> &files, 
 // Returns whether audio generation succeeded
 bool generateAudio(Macro &macro) {
     bool isTwoPlayerMacro {macro.isTwoPlayer()};
+    bool isPlatformerMacro {macro.isPlatformer()};
 
     std::vector<AudioFile> p1Clicks{};
     std::vector<AudioFile> p1Releases{};
@@ -88,6 +89,26 @@ bool generateAudio(Macro &macro) {
     std::vector<AudioFile> p2Releases{};
     std::vector<AudioFile> p2SoftClicks{};
     std::vector<AudioFile> p2SoftReleases{};
+
+    std::vector<AudioFile> p1LeftClicks{};
+    std::vector<AudioFile> p1LeftReleases{};
+    std::vector<AudioFile> p1LeftSoftClicks{};
+    std::vector<AudioFile> p1LeftSoftReleases{};
+
+    std::vector<AudioFile> p2LeftClicks{};
+    std::vector<AudioFile> p2LeftReleases{};
+    std::vector<AudioFile> p2LeftSoftClicks{};
+    std::vector<AudioFile> p2LeftSoftReleases{};
+
+    std::vector<AudioFile> p1RightClicks{};
+    std::vector<AudioFile> p1RightReleases{};
+    std::vector<AudioFile> p1RightSoftClicks{};
+    std::vector<AudioFile> p1RightSoftReleases{};
+
+    std::vector<AudioFile> p2RightClicks{};
+    std::vector<AudioFile> p2RightReleases{};
+    std::vector<AudioFile> p2RightSoftClicks{};
+    std::vector<AudioFile> p2RightSoftReleases{};
 
     // Get click audio files
     p1Clicks = getAudioFiles("player_1/clicks");
@@ -111,6 +132,56 @@ bool generateAudio(Macro &macro) {
         p1SoftReleases = p1Releases;
     }
 
+    if (macro.isPlatformer()) {
+        p1LeftClicks = getAudioFiles("player_1/leftclicks");
+        p1LeftReleases = getAudioFiles("player_1/leftreleases");
+        p1LeftSoftClicks = getAudioFiles("player_1/leftsoftclicks");
+        p1LeftSoftReleases = getAudioFiles("player_1/leftsoftreleases");
+
+        p1RightClicks = getAudioFiles("player_1/rightclicks");
+        p1RightReleases = getAudioFiles("player_1/rightreleases");
+        p1RightSoftClicks = getAudioFiles("player_1/rightsoftclicks");
+        p1RightSoftReleases = getAudioFiles("player_1/rightsoftreleases");
+
+        if (p1LeftClicks.size() == 0) {
+            std::cerr << "Error: P1 left clicks not found.\n";
+            return false;
+        }
+
+        if (p1LeftReleases.size() == 0) {
+            std::cerr << "Warning: P1 left releases not found.\n";
+        }
+
+        if (p1LeftSoftClicks.size() == 0) {
+            std::cerr << "Warning: P1 left softclicks not found, using normal clicks.\n";
+            p1LeftSoftClicks = p1LeftClicks;
+        }
+
+        if (p1LeftSoftReleases.size() == 0) {
+            std::cerr << "Warning: P1 left softreleases not found, using normal releases.\n";
+            p1LeftSoftReleases = p1LeftReleases;
+        }
+
+        if (p1RightClicks.size() == 0) {
+            std::cerr << "Error: P1 right clicks not found.\n";
+            return false;
+        }
+
+        if (p1RightReleases.size() == 0) {
+            std::cerr << "Warning: P1 right releases not found.\n";
+        }
+
+        if (p1RightSoftClicks.size() == 0) {
+            std::cerr << "Warning: P1 right softclicks not found, using normal clicks.\n";
+            p1RightSoftClicks = p1RightClicks;
+        }
+
+        if (p1RightSoftReleases.size() == 0) {
+            std::cerr << "Warning: P1 right softreleases not found, using normal releases.\n";
+            p1RightSoftReleases = p1RightReleases;
+        }
+    }
+
     if (isTwoPlayerMacro) {
         p2Clicks = getAudioFiles("player_2/clicks");
         p2Releases = getAudioFiles("player_2/releases");
@@ -132,6 +203,56 @@ bool generateAudio(Macro &macro) {
             std::cout << "Warning: P2 softreleases not found, using normal releases.\n";
             p2SoftReleases = p2Releases;
         }
+
+        if (macro.isPlatformer()) {
+            p2LeftClicks = getAudioFiles("player_2/leftclicks");
+            p2LeftReleases = getAudioFiles("player_2/leftreleases");
+            p2LeftSoftClicks = getAudioFiles("player_2/leftsoftclicks");
+            p2LeftSoftReleases = getAudioFiles("player_2/leftsoftreleases");
+
+            p2RightClicks = getAudioFiles("player_2/rightclicks");
+            p2RightReleases = getAudioFiles("player_2/rightreleases");
+            p2RightSoftClicks = getAudioFiles("player_2/rightsoftclicks");
+            p2RightSoftReleases = getAudioFiles("player_2/rightsoftreleases");
+
+            if (p2LeftClicks.size() == 0) {
+                std::cerr << "Error: P1 left clicks not found.\n";
+                return false;
+            }
+
+            if (p2LeftReleases.size() == 0) {
+                std::cerr << "Warning: P1 left releases not found.\n";
+            }
+
+            if (p2LeftSoftClicks.size() == 0) {
+                std::cerr << "Warning: P1 left softclicks not found, using normal clicks.\n";
+                p2LeftSoftClicks = p2LeftClicks;
+            }
+
+            if (p2LeftSoftReleases.size() == 0) {
+                std::cerr << "Warning: P1 left softreleases not found, using normal releases.\n";
+                p2LeftSoftReleases = p2LeftReleases;
+            }
+
+            if (p2RightClicks.size() == 0) {
+                std::cerr << "Error: P1 right clicks not found.\n";
+                return false;
+            }
+
+            if (p2RightReleases.size() == 0) {
+                std::cerr << "Warning: P1 right releases not found.\n";
+            }
+
+            if (p2RightSoftClicks.size() == 0) {
+                std::cerr << "Warning: P1 right softclicks not found, using normal clicks.\n";
+                p2RightSoftClicks = p2RightClicks;
+            }
+
+            if (p2RightSoftReleases.size() == 0) {
+                std::cerr << "Warning: P1 right softreleases not found, using normal releases.\n";
+                p2RightSoftReleases = p2RightReleases;
+            }
+        }
     }
 
     // Define the total duration in seconds of the output file
@@ -147,12 +268,33 @@ bool generateAudio(Macro &macro) {
     std::vector<float> p1SoftClickTimes{};
     std::vector<float> p1SoftReleaseTimes{};
 
+    std::vector<float> p1LeftClickTimes{};
+    std::vector<float> p1LeftReleaseTimes{};
+    std::vector<float> p1LeftSoftClickTimes{};
+    std::vector<float> p1LeftSoftReleaseTimes{};
+
+    std::vector<float> p1RightClickTimes{};
+    std::vector<float> p1RightReleaseTimes{};
+    std::vector<float> p1RightSoftClickTimes{};
+    std::vector<float> p1RightSoftReleaseTimes{};
+
     std::vector<float> p2ClickTimes{};
     std::vector<float> p2ReleaseTimes{};
     std::vector<float> p2SoftClickTimes{};
     std::vector<float> p2SoftReleaseTimes{};
 
+    std::vector<float> p2LeftClickTimes{};
+    std::vector<float> p2LeftReleaseTimes{};
+    std::vector<float> p2LeftSoftClickTimes{};
+    std::vector<float> p2LeftSoftReleaseTimes{};
+
+    std::vector<float> p2RightClickTimes{};
+    std::vector<float> p2RightReleaseTimes{};
+    std::vector<float> p2RightSoftClickTimes{};
+    std::vector<float> p2RightSoftReleaseTimes{};
+
     // Add the times of inputs to their corresponding vectors
+    // TODO: continue platformer clicks from here
     for (Action action : macro.getActions()) {
         for (Input input : action.getPlayerOneInputs()) {
             if (input.isPressed()) {

@@ -245,6 +245,25 @@ bool Macro::isTwoPlayer() {
     return hasPlayer1 && hasPlayer2;
 }
 
+bool Macro::isPlatformer() {
+    if (m_bot == Bot::MH_REPLAY_GDR ||m_bot == Bot::XDBOT_GDR) {
+        for (Action& action : m_actions) {
+            for (Input& input : action.getPlayerOneInputs()) {
+                if (input.getButton() == Button::LEFT || input.getButton() == Button::RIGHT) {
+                    return true;
+                }
+            }
+            for (Input& input : action.getPlayerTwoInputs()) {
+                if (input.getButton() == Button::LEFT || input.getButton() == Button::RIGHT) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+
 void Macro::swapPlayerOneAndTwoActions() {
     for (Action& action : m_actions) {
         std::swap(action.getPlayerOneInputs(), action.getPlayerTwoInputs());
