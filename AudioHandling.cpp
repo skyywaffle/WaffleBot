@@ -54,9 +54,6 @@ std::vector<AudioFile> getAudioFiles(const char *folderName) {
             }
         }
     }
-    else { // if the folder name is invalid
-        std::cerr << "Could not find folder name: " << folderName << '\n';
-    }
     return files;
 }
 
@@ -121,7 +118,8 @@ bool generateAudio(Macro &macro) {
         return false;
     }
     if (p1Releases.size() == 0) {
-        std::cout << "Warning: P1 releases not found.\n";
+        std::cout << "Error: P1 releases not found.\n";
+        return false;
     }
     if (p1SoftClicks.size() == 0) {
         std::cout << "Warning: P1 softclicks not found, using normal clicks.\n";
@@ -130,6 +128,28 @@ bool generateAudio(Macro &macro) {
     if (p1SoftReleases.size() == 0) {
         std::cout << "Warning: P1 softreleases not found, using normal releases.\n";
         p1SoftReleases = p1Releases;
+    }
+
+    p2Clicks = getAudioFiles("player_2/clicks");
+    p2Releases = getAudioFiles("player_2/releases");
+    p2SoftClicks = getAudioFiles("player_2/softclicks");
+    p2SoftReleases = getAudioFiles("player_2/softreleases");
+
+    if (p2Clicks.size() == 0) {
+        std::cerr << "Error: P2 clicks not found.\n";
+        return false;
+    }
+    if (p2Releases.size() == 0) {
+        std::cout << "Error: P2 releases not found.\n";
+        return false;
+    }
+    if (p2SoftClicks.size() == 0) {
+        std::cout << "Warning: P2 softclicks not found, using normal clicks.\n";
+        p2SoftClicks = p2Clicks;
+    }
+    if (p2SoftReleases.size() == 0) {
+        std::cout << "Warning: P2 softreleases not found, using normal releases.\n";
+        p2SoftReleases = p2Releases;
     }
 
     if (macro.isPlatformer()) {
@@ -149,7 +169,8 @@ bool generateAudio(Macro &macro) {
         }
 
         if (p1LeftReleases.size() == 0) {
-            std::cerr << "Warning: P1 left releases not found.\n";
+            std::cerr << "Error: P1 left releases not found.\n";
+            return false;
         }
 
         if (p1LeftSoftClicks.size() == 0) {
@@ -168,7 +189,8 @@ bool generateAudio(Macro &macro) {
         }
 
         if (p1RightReleases.size() == 0) {
-            std::cerr << "Warning: P1 right releases not found.\n";
+            std::cerr << "Error: P1 right releases not found.\n";
+            return false;
         }
 
         if (p1RightSoftClicks.size() == 0) {
@@ -180,78 +202,55 @@ bool generateAudio(Macro &macro) {
             std::cerr << "Warning: P1 right softreleases not found, using normal releases.\n";
             p1RightSoftReleases = p1RightReleases;
         }
-    }
 
-    if (isTwoPlayerMacro) {
-        p2Clicks = getAudioFiles("player_2/clicks");
-        p2Releases = getAudioFiles("player_2/releases");
-        p2SoftClicks = getAudioFiles("player_2/softclicks");
-        p2SoftReleases = getAudioFiles("player_2/softreleases");
+        p2LeftClicks = getAudioFiles("player_2/leftclicks");
+        p2LeftReleases = getAudioFiles("player_2/leftreleases");
+        p2LeftSoftClicks = getAudioFiles("player_2/leftsoftclicks");
+        p2LeftSoftReleases = getAudioFiles("player_2/leftsoftreleases");
 
-        if (p2Clicks.size() == 0) {
-            std::cerr << "Error: P2 clicks not found.\n";
+        p2RightClicks = getAudioFiles("player_2/rightclicks");
+        p2RightReleases = getAudioFiles("player_2/rightreleases");
+        p2RightSoftClicks = getAudioFiles("player_2/rightsoftclicks");
+        p2RightSoftReleases = getAudioFiles("player_2/rightsoftreleases");
+
+        if (p2LeftClicks.size() == 0) {
+            std::cerr << "Error: P2 left clicks not found.\n";
             return false;
         }
-        if (p2Releases.size() == 0) {
-            std::cout << "Warning: P2 releases not found.\n";
-        }
-        if (p2SoftClicks.size() == 0) {
-            std::cout << "Warning: P2 softclicks not found, using normal clicks.\n";
-            p2SoftClicks = p2Clicks;
-        }
-        if (p2SoftReleases.size() == 0) {
-            std::cout << "Warning: P2 softreleases not found, using normal releases.\n";
-            p2SoftReleases = p2Releases;
+
+        if (p2LeftReleases.size() == 0) {
+            std::cerr << "Error: P2 left releases not found.\n";
+            return false;
         }
 
-        if (macro.isPlatformer()) {
-            p2LeftClicks = getAudioFiles("player_2/leftclicks");
-            p2LeftReleases = getAudioFiles("player_2/leftreleases");
-            p2LeftSoftClicks = getAudioFiles("player_2/leftsoftclicks");
-            p2LeftSoftReleases = getAudioFiles("player_2/leftsoftreleases");
+        if (p2LeftSoftClicks.size() == 0) {
+            std::cerr << "Warning: P2 left softclicks not found, using normal clicks.\n";
+            p2LeftSoftClicks = p2LeftClicks;
+        }
 
-            p2RightClicks = getAudioFiles("player_2/rightclicks");
-            p2RightReleases = getAudioFiles("player_2/rightreleases");
-            p2RightSoftClicks = getAudioFiles("player_2/rightsoftclicks");
-            p2RightSoftReleases = getAudioFiles("player_2/rightsoftreleases");
+        if (p2LeftSoftReleases.size() == 0) {
+            std::cerr << "Warning: P2 left softreleases not found, using normal releases.\n";
+            p2LeftSoftReleases = p2LeftReleases;
+        }
 
-            if (p2LeftClicks.size() == 0) {
-                std::cerr << "Error: P1 left clicks not found.\n";
-                return false;
-            }
+        if (p2RightClicks.size() == 0) {
+            std::cerr << "Error: P2 right clicks not found.\n";
+            return false;
+        }
 
-            if (p2LeftReleases.size() == 0) {
-                std::cerr << "Warning: P1 left releases not found.\n";
-            }
+        if (p2RightReleases.size() == 0) {
+            std::cerr << "Error: P2 right releases not found.\n";
+            return false;
+        }
 
-            if (p2LeftSoftClicks.size() == 0) {
-                std::cerr << "Warning: P1 left softclicks not found, using normal clicks.\n";
-                p2LeftSoftClicks = p2LeftClicks;
-            }
+        if (p2RightSoftClicks.size() == 0) {
+            std::cerr << "Warning: P2 right softclicks not found, using normal clicks.\n";
+            p2RightSoftClicks = p2RightClicks;
+        }
 
-            if (p2LeftSoftReleases.size() == 0) {
-                std::cerr << "Warning: P1 left softreleases not found, using normal releases.\n";
-                p2LeftSoftReleases = p2LeftReleases;
-            }
-
-            if (p2RightClicks.size() == 0) {
-                std::cerr << "Error: P1 right clicks not found.\n";
-                return false;
-            }
-
-            if (p2RightReleases.size() == 0) {
-                std::cerr << "Warning: P1 right releases not found.\n";
-            }
-
-            if (p2RightSoftClicks.size() == 0) {
-                std::cerr << "Warning: P1 right softclicks not found, using normal clicks.\n";
-                p2RightSoftClicks = p2RightClicks;
-            }
-
-            if (p2RightSoftReleases.size() == 0) {
-                std::cerr << "Warning: P1 right softreleases not found, using normal releases.\n";
-                p2RightSoftReleases = p2RightReleases;
-            }
+        if (p2RightSoftReleases.size() == 0) {
+            std::cerr << "Warning: P2 right softreleases not found, using normal releases.\n";
+            p2RightSoftReleases = p2RightReleases;
         }
     }
 
@@ -294,43 +293,114 @@ bool generateAudio(Macro &macro) {
     std::vector<float> p2RightSoftReleaseTimes{};
 
     // Add the times of inputs to their corresponding vectors
-    // TODO: continue platformer clicks from here
+    float macroFps = static_cast<float>(macro.getFps());
     for (Action action : macro.getActions()) {
+        float actionTime = action.getFrame() / macroFps;
         for (Input input : action.getPlayerOneInputs()) {
             if (input.isPressed()) {
                 if (input.getClickType() == ClickType::NORMAL) {
-                    p1ClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    Button button = input.getButton();
+                    if (button == Button::JUMP) {
+                        p1ClickTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::LEFT) {
+                        p1LeftClickTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::RIGHT) {
+                        p1RightClickTimes.push_back(actionTime);
+                    }
                 }
                 else if (input.getClickType() == ClickType::SOFT) {
-                    p1SoftClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    Button button = input.getButton();
+                    if (button == Button::JUMP) {
+                        p1SoftClickTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::LEFT) {
+                        p1LeftSoftClickTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::RIGHT) {
+                        p1RightSoftClickTimes.push_back(actionTime);
+                    }
                 }
             }
             else {
                 if (input.getClickType() == ClickType::NORMAL) {
-                    p1ReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    Button button = input.getButton();
+                    if (button == Button::JUMP) {
+                        p1ReleaseTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::LEFT) {
+                        p1LeftReleaseTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::RIGHT) {
+                        p1RightReleaseTimes.push_back(actionTime);
+                    }
                 }
                 else if (input.getClickType() == ClickType::SOFT) {
-                    p1SoftReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    Button button = input.getButton();
+                    if (button == Button::JUMP) {
+                        p1SoftReleaseTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::LEFT) {
+                        p1LeftSoftReleaseTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::RIGHT) {
+                        p1RightSoftReleaseTimes.push_back(actionTime);
+                    }
                 }
             }
         }
 
-        if (isTwoPlayerMacro) {
-            for (Input input : action.getPlayerTwoInputs()) {
-                if (input.isPressed()) {
-                    if (input.getClickType() == ClickType::NORMAL) {
-                        p2ClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+        for (Input input : action.getPlayerTwoInputs()) {
+            if (input.isPressed()) {
+                if (input.getClickType() == ClickType::NORMAL) {
+                    Button button = input.getButton();
+                    if (button == Button::JUMP) {
+                        p2ClickTimes.push_back(actionTime);
                     }
-                    else if (input.getClickType() == ClickType::SOFT) {
-                        p2SoftClickTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    else if (button == Button::LEFT) {
+                        p2LeftClickTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::RIGHT) {
+                        p2RightClickTimes.push_back(actionTime);
                     }
                 }
-                else {
-                    if (input.getClickType() == ClickType::NORMAL) {
-                        p2ReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                else if (input.getClickType() == ClickType::SOFT) {
+                    Button button = input.getButton();
+                    if (button == Button::JUMP) {
+                        p2SoftClickTimes.push_back(actionTime);
                     }
-                    else if (input.getClickType() == ClickType::SOFT) {
-                        p2SoftReleaseTimes.push_back(action.getFrame() / (float)macro.getFps());
+                    else if (button == Button::LEFT) {
+                        p2LeftSoftClickTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::RIGHT) {
+                        p2RightSoftClickTimes.push_back(actionTime);
+                    }
+                }
+            }
+            else {
+                if (input.getClickType() == ClickType::NORMAL) {
+                    Button button = input.getButton();
+                    if (button == Button::JUMP) {
+                        p2ReleaseTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::LEFT) {
+                        p2LeftReleaseTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::RIGHT) {
+                        p2RightReleaseTimes.push_back(actionTime);
+                    }
+                }
+                else if (input.getClickType() == ClickType::SOFT) {
+                    Button button = input.getButton();
+                    if (button == Button::JUMP) {
+                        p2SoftReleaseTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::LEFT) {
+                        p2LeftSoftReleaseTimes.push_back(actionTime);
+                    }
+                    else if (button == Button::RIGHT) {
+                        p2RightSoftReleaseTimes.push_back(actionTime);
                     }
                 }
             }
@@ -343,11 +413,31 @@ bool generateAudio(Macro &macro) {
     addToBuffer(p1SoftClickTimes, p1SoftClicks, outputBuffer, sampleRate, channels);
     addToBuffer(p1SoftReleaseTimes, p1SoftReleases, outputBuffer, sampleRate, channels);
 
-    if (isTwoPlayerMacro) {
-        addToBuffer(p2ClickTimes, p2Clicks, outputBuffer, sampleRate, channels);
-        addToBuffer(p2ReleaseTimes, p2Releases, outputBuffer, sampleRate, channels);
-        addToBuffer(p2SoftClickTimes, p2SoftClicks, outputBuffer, sampleRate, channels);
-        addToBuffer(p2SoftReleaseTimes, p2SoftReleases, outputBuffer, sampleRate, channels);
+    addToBuffer(p2ClickTimes, p2Clicks, outputBuffer, sampleRate, channels);
+    addToBuffer(p2ReleaseTimes, p2Releases, outputBuffer, sampleRate, channels);
+    addToBuffer(p2SoftClickTimes, p2SoftClicks, outputBuffer, sampleRate, channels);
+    addToBuffer(p2SoftReleaseTimes, p2SoftReleases, outputBuffer, sampleRate, channels);
+
+    if (isPlatformerMacro) {
+        addToBuffer(p1LeftClickTimes, p1LeftClicks, outputBuffer, sampleRate, channels);
+        addToBuffer(p1LeftReleaseTimes, p1LeftReleases, outputBuffer, sampleRate, channels);
+        addToBuffer(p1LeftSoftClickTimes, p1LeftSoftClicks, outputBuffer, sampleRate, channels);
+        addToBuffer(p1LeftSoftReleaseTimes, p1LeftSoftReleases, outputBuffer, sampleRate, channels);
+
+        addToBuffer(p1RightClickTimes, p1RightClicks, outputBuffer, sampleRate, channels);
+        addToBuffer(p1RightReleaseTimes, p1RightReleases, outputBuffer, sampleRate, channels);
+        addToBuffer(p1RightSoftClickTimes, p1RightSoftClicks, outputBuffer, sampleRate, channels);
+        addToBuffer(p1RightSoftReleaseTimes, p1RightSoftReleases, outputBuffer, sampleRate, channels);
+
+        addToBuffer(p2LeftClickTimes, p2LeftClicks, outputBuffer, sampleRate, channels);
+        addToBuffer(p2LeftReleaseTimes, p2LeftReleases, outputBuffer, sampleRate, channels);
+        addToBuffer(p2LeftSoftClickTimes, p2LeftSoftClicks, outputBuffer, sampleRate, channels);
+        addToBuffer(p2LeftSoftReleaseTimes, p2LeftSoftReleases, outputBuffer, sampleRate, channels);
+
+        addToBuffer(p2RightClickTimes, p2RightClicks, outputBuffer, sampleRate, channels);
+        addToBuffer(p2RightReleaseTimes, p2RightReleases, outputBuffer, sampleRate, channels);
+        addToBuffer(p2RightSoftClickTimes, p2RightSoftClicks, outputBuffer, sampleRate, channels);
+        addToBuffer(p2RightSoftReleaseTimes, p2RightSoftReleases, outputBuffer, sampleRate, channels);
     }
 
     // Write to new WAV file
