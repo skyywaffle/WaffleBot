@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 using namespace simdjson;
 
 int main(int argc, char *argv[]) {
-    std::string versionNumber{"1.4.0"};
+    std::string versionNumber{"1.4.1"};
     std::cout << "WaffleBot " << versionNumber << " by skyywaffle\n\n";
 
     Timer programTimer;
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 
 // Test a specific macro, debug feature
 #ifdef DEBUG
-    Macro macro{"Duelo Maestro Solo 62.gdr.json"};
+    Macro macro{"Fireboy N Watergirl.gdr.json"};
     generateAudio(macro);
 #endif
 

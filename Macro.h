@@ -24,7 +24,6 @@ class Macro {
     std::vector<Action> m_actions{};
 
     padded_string m_macroBuffer;
-    ondemand::parser m_parser;
 
 public:
     explicit Macro(const std::string& filepath);

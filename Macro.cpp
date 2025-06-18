@@ -12,7 +12,6 @@ namespace fs = std::filesystem;
 using namespace simdjson;
 using namespace std::string_view_literals;
 
-
 // File type is JSON, supports xdBot, MH Replay, and TASBot JSONs
 Macro::Macro(const std::string& filepath) {
     m_name = fs::path(filepath).stem().string();
@@ -29,11 +28,16 @@ Macro::Macro(const std::string& filepath) {
 }
 
 ondemand::document Macro::getMacroData() {
-    return m_parser.iterate(m_macroBuffer);
+    // CRITICAL FIX: Create a new parser instance each time to avoid iterator reuse issues
+    // This prevents stack overflow from simdjson's internal iterator management
+    ondemand::parser fresh_parser;
+    return fresh_parser.iterate(m_macroBuffer);
 }
 
 void Macro::determineBotType() {
-    auto macroData = getMacroData();
+    // Use a dedicated parser for bot type determination
+    ondemand::parser bot_parser;
+    auto macroData = bot_parser.iterate(m_macroBuffer);
 
     if (auto botName = macroData["bot"]["name"].get_string(); !botName.error()) {
         if (botName.value() == "MH_REPLAY"sv) {
@@ -47,11 +51,11 @@ void Macro::determineBotType() {
 
     // Determine if macro is TASBot
     // TASBot has "fps" as the first key-value pair
+    // Create a fresh parser instance for this check
+    ondemand::parser tasbot_parser;
+    auto macroData2 = tasbot_parser.iterate(m_macroBuffer);
 
-    // Re-parse document
-    macroData = getMacroData();
-
-    auto macroObject = macroData.get_object();
+    auto macroObject = macroData2.get_object();
 
     for (auto field : macroObject) {
         if (field.key() == "fps") {
@@ -67,7 +71,9 @@ void Macro::determineBotType() {
 }
 
 void Macro::parseMacroJson() {
-    auto macroData = getMacroData();
+    // Use a dedicated parser for macro parsing
+    ondemand::parser macro_parser;
+    auto macroData = macro_parser.iterate(m_macroBuffer);
 
     // Parse xdBot JSON macro
     if (m_bot == Bot::XDBOT_GDR) {
@@ -125,28 +131,39 @@ void Macro::parseMacroJson() {
         m_frameCount = lastFrame;
     }
 
-    // Grab actions from GDR JSON
+    // Process inputs with a separate parser instance
+    // This prevents simdjson iterator stack overflow issues
     if (m_bot == Bot::XDBOT_GDR || m_bot == Bot::MH_REPLAY_GDR) {
-        auto inputs_result = macroData["inputs"].get_array();
+        // Create a fresh parser for inputs processing
+        ondemand::parser inputs_parser;
+        auto inputsData = inputs_parser.iterate(m_macroBuffer);
+
+        auto inputs_result = inputsData["inputs"].get_array();
         if (inputs_result.error()) {
             std::cerr << "Failed to read 'inputs' array: " << inputs_result.error() << "\n";
             std::exit(1);
         }
 
+        // Process each input individually to avoid deep stack recursion
         for (auto actionData : inputs_result.value()) {
-            m_actions.emplace_back(actionData, Bot::MH_REPLAY_GDR);
+            try {
+                m_actions.emplace_back(actionData, Bot::MH_REPLAY_GDR);
+            } catch (const std::exception& e) {
+                std::cerr << "Error processing action: " << e.what() << "\n";
+                continue; // Skip malformed actions instead of crashing
+            }
         }
 
-
         // Merge different actions on the same frame (happens if player 1 and player 2 make an action on the same frame)
-        for (int i{1}; i < m_actions.size(); i++) {
+        for (size_t i = 1; i < m_actions.size(); i++) {
             if (m_actions[i].getFrame() == m_actions[i - 1].getFrame()) {
                 // Transfer player 2's inputs to the previous action, where there are no player 2 inputs
                 if (m_actions[i].getPlayerOneInputs().empty()) {
                     m_actions[i - 1].setPlayerTwoInputs(m_actions[i].getPlayerTwoInputs());
 
                     // Remove the now redundant action
-                    m_actions.erase(m_actions.begin() + i--);
+                    m_actions.erase(m_actions.begin() + i);
+                    i--; // Adjust index after erase
                 }
 
                 // Else transfer player 1's inputs to the previous action, where there are no player 1 inputs
@@ -154,7 +171,8 @@ void Macro::parseMacroJson() {
                     m_actions[i - 1].setPlayerOneInputs(m_actions[i].getPlayerOneInputs());
 
                     // Remove the now redundant action
-                    m_actions.erase(m_actions.begin() + i--);
+                    m_actions.erase(m_actions.begin() + i);
+                    i--; // Adjust index after erase
                 }
             }
         }
@@ -162,25 +180,49 @@ void Macro::parseMacroJson() {
 
     // Grab inputs for TASBot
     else if (m_bot == Bot::TASBOT) {
-        auto inputs_result = macroData["macro"].get_array();
+        // Create a fresh parser for TASBot inputs
+        ondemand::parser tasbot_inputs_parser;
+        auto tasbotData = tasbot_inputs_parser.iterate(m_macroBuffer);
+
+        auto inputs_result = tasbotData["macro"].get_array();
         if (inputs_result.error()) {
             std::cerr << "Failed to read 'inputs' array: " << inputs_result.error() << "\n";
             std::exit(1);
         }
 
         for (auto actionData : inputs_result.value()) {
-            m_actions.emplace_back(actionData, Bot::TASBOT);
+            try {
+                m_actions.emplace_back(actionData, Bot::TASBOT);
+            } catch (const std::exception& e) {
+                std::cerr << "Error processing TASBot action: " << e.what() << "\n";
+                continue; // Skip malformed actions
+            }
         }
         // We don't need to consider merging different actions on same frame, already taken care of in Action.cpp
     }
 }
 
 void Macro::determineClickTypes() {
-    static padded_string clickConfigBuffer = padded_string::load("config.json");
-    static ondemand::parser parser;
-    static auto clickConfig = parser.iterate(clickConfigBuffer);
-    static double softClickTime = clickConfig["softclickTime"].get_double();
-    static double softClickAfterReleaseTime = clickConfig["softclickAfterReleaseTime"].get_double();
+    // Use static variables but with proper initialization guards
+    static bool config_loaded = false;
+    static double softClickTime = 0.0;
+    static double softClickAfterReleaseTime = 0.0;
+
+    if (!config_loaded) {
+        try {
+            padded_string clickConfigBuffer = padded_string::load("config.json");
+            ondemand::parser config_parser;
+            auto clickConfig = config_parser.iterate(clickConfigBuffer);
+            softClickTime = clickConfig["softclickTime"].get_double();
+            softClickAfterReleaseTime = clickConfig["softclickAfterReleaseTime"].get_double();
+            config_loaded = true;
+        } catch (const std::exception& e) {
+            std::cerr << "Warning: Could not load config.json, using default values: " << e.what() << "\n";
+            softClickTime = 0.1;
+            softClickAfterReleaseTime = 0.05;
+            config_loaded = true;
+        }
+    }
 
     std::array<int, 3> p1lastButtonFrame{};
     std::array<bool, 3> p1isFirstButtonInput{true, true, true};
@@ -190,46 +232,48 @@ void Macro::determineClickTypes() {
     std::array<bool, 3> p2isFirstButtonInput{true, true, true};
     std::array<ClickType, 3> p2LastButtonType{ClickType::NORMAL, ClickType::NORMAL, ClickType::NORMAL};
 
-
     for (Action& action : m_actions) {
         int currentFrame = action.getFrame();
 
         for (Input& input : action.getPlayerOneInputs()) {
             int button = static_cast<int>(input.getButton());
+            if (button >= 0 && button < 3) { // Bounds check
+                if (!p1isFirstButtonInput[button]) {
+                    if (input.isPressed()) {
+                        double timeDelta = static_cast<double>(currentFrame - p1lastButtonFrame[button]) / m_fps;
 
-            if (!p1isFirstButtonInput[button]) {
-                if (input.isPressed()) {
-                    double timeDelta = static_cast<double>(currentFrame - p1lastButtonFrame[button]) / m_fps;
-
-                    if (timeDelta < softClickAfterReleaseTime || timeDelta < softClickTime) {
-                        input.setClickType(ClickType::SOFT);
+                        if (timeDelta < softClickAfterReleaseTime || timeDelta < softClickTime) {
+                            input.setClickType(ClickType::SOFT);
+                        }
+                    } else {
+                        input.setClickType(p1LastButtonType[button]);
                     }
+                    p1lastButtonFrame[button] = currentFrame;
                 } else {
-                    input.setClickType(p1LastButtonType[button]);
+                    p1lastButtonFrame[button] = currentFrame;
+                    p1isFirstButtonInput[button] = false;
                 }
-                p1lastButtonFrame[button] = currentFrame;
-            } else {
-                p1lastButtonFrame[button] = currentFrame;
-                p1isFirstButtonInput[button] = false;
             }
         }
+
         for (Input& input : action.getPlayerTwoInputs()) {
             int button = static_cast<int>(input.getButton());
+            if (button >= 0 && button < 3) { // Bounds check
+                if (!p2isFirstButtonInput[button]) {
+                    if (input.isPressed()) {
+                        double timeDelta = static_cast<double>(currentFrame - p2lastButtonFrame[button]) / m_fps;
 
-            if (!p2isFirstButtonInput[button]) {
-                if (input.isPressed()) {
-                    double timeDelta = static_cast<double>(currentFrame - p2lastButtonFrame[button]) / m_fps;
-
-                    if (timeDelta < softClickAfterReleaseTime || timeDelta < softClickTime) {
-                        input.setClickType(ClickType::SOFT);
+                        if (timeDelta < softClickAfterReleaseTime || timeDelta < softClickTime) {
+                            input.setClickType(ClickType::SOFT);
+                        }
+                    } else {
+                        input.setClickType(p2LastButtonType[button]);
                     }
+                    p2lastButtonFrame[button] = currentFrame;
                 } else {
-                    input.setClickType(p2LastButtonType[button]);
+                    p2lastButtonFrame[button] = currentFrame;
+                    p2isFirstButtonInput[button] = false;
                 }
-                p2lastButtonFrame[button] = currentFrame;
-            } else {
-                p2lastButtonFrame[button] = currentFrame;
-                p2isFirstButtonInput[button] = false;
             }
         }
     }
@@ -246,7 +290,7 @@ bool Macro::isTwoPlayer() {
 }
 
 bool Macro::isPlatformer() {
-    if (m_bot == Bot::MH_REPLAY_GDR ||m_bot == Bot::XDBOT_GDR) {
+    if (m_bot == Bot::MH_REPLAY_GDR || m_bot == Bot::XDBOT_GDR) {
         for (Action& action : m_actions) {
             for (Input& input : action.getPlayerOneInputs()) {
                 if (input.getButton() == Button::LEFT || input.getButton() == Button::RIGHT) {
@@ -262,7 +306,6 @@ bool Macro::isPlatformer() {
     }
     return false;
 }
-
 
 void Macro::swapPlayerOneAndTwoActions() {
     for (Action& action : m_actions) {
