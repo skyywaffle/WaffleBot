@@ -1,6 +1,7 @@
 #include "AudioHandling.h"
 
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <random>
 #include <sndfile.h>
@@ -74,6 +75,7 @@ void addToBuffer(std::vector<float> &inputTimes, std::vector<AudioFile> &files, 
 
 // Returns whether audio generation succeeded
 bool generateAudio(Macro &macro) {
+    bool clickpackFileExists = false;
     bool isTwoPlayerMacro {macro.isTwoPlayer()};
     bool isPlatformerMacro {macro.isPlatformer()};
 
@@ -107,11 +109,90 @@ bool generateAudio(Macro &macro) {
     std::vector<AudioFile> p2RightSoftClicks{};
     std::vector<AudioFile> p2RightSoftReleases{};
 
-    // Get click audio files
-    p1Clicks = getAudioFiles("player_1/clicks");
-    p1Releases = getAudioFiles("player_1/releases");
-    p1SoftClicks = getAudioFiles("player_1/softclicks");
-    p1SoftReleases = getAudioFiles("player_1/softreleases");
+    std::ifstream clickpackFile("clickpack.wfb", std::ios::binary);
+
+    int sampleRate;
+    int channels;
+    SF_INFO audioInfo;
+
+    if (clickpackFile.is_open()) {
+        clickpackFileExists = true;
+
+        clickpackFile.read(reinterpret_cast<char*>(&sampleRate), sizeof(sampleRate));
+        clickpackFile.read(reinterpret_cast<char*>(&channels), sizeof(channels));
+        clickpackFile.read(reinterpret_cast<char*>(&audioInfo), sizeof(audioInfo));
+
+        auto readAudioVector = [&](std::vector<AudioFile>& vec) {
+            int count;
+            clickpackFile.read(reinterpret_cast<char*>(&count), sizeof(count));
+            vec.resize(count);
+            for (int i = 0; i < count; ++i) {
+                int bufferLen;
+                clickpackFile.read(reinterpret_cast<char*>(&bufferLen), sizeof(bufferLen));
+                vec[i].buffer.resize(bufferLen);
+                clickpackFile.read(reinterpret_cast<char*>(vec[i].buffer.data()), bufferLen * sizeof(short));
+            }
+        };
+
+        readAudioVector(p1Clicks);
+        readAudioVector(p1Releases);
+        readAudioVector(p1SoftClicks);
+        readAudioVector(p1SoftReleases);
+        readAudioVector(p1LeftClicks);
+        readAudioVector(p1LeftReleases);
+        readAudioVector(p1LeftSoftClicks);
+        readAudioVector(p1LeftSoftReleases);
+        readAudioVector(p1RightClicks);
+        readAudioVector(p1RightReleases);
+        readAudioVector(p1RightSoftClicks);
+        readAudioVector(p1RightSoftReleases);
+
+        readAudioVector(p2Clicks);
+        readAudioVector(p2Releases);
+        readAudioVector(p2SoftClicks);
+        readAudioVector(p2SoftReleases);
+        readAudioVector(p2LeftClicks);
+        readAudioVector(p2LeftReleases);
+        readAudioVector(p2LeftSoftClicks);
+        readAudioVector(p2LeftSoftReleases);
+        readAudioVector(p2RightClicks);
+        readAudioVector(p2RightReleases);
+        readAudioVector(p2RightSoftClicks);
+        readAudioVector(p2RightSoftReleases);
+    }
+
+    if (!clickpackFileExists) {
+        // Get click audio files
+        p1Clicks = getAudioFiles("player_1/clicks");
+        p1Releases = getAudioFiles("player_1/releases");
+        p1SoftClicks = getAudioFiles("player_1/softclicks");
+        p1SoftReleases = getAudioFiles("player_1/softreleases");
+
+        p1LeftClicks = getAudioFiles("player_1/leftclicks");
+        p1LeftReleases = getAudioFiles("player_1/leftreleases");
+        p1LeftSoftClicks = getAudioFiles("player_1/leftsoftclicks");
+        p1LeftSoftReleases = getAudioFiles("player_1/leftsoftreleases");
+
+        p1RightClicks = getAudioFiles("player_1/rightclicks");
+        p1RightReleases = getAudioFiles("player_1/rightreleases");
+        p1RightSoftClicks = getAudioFiles("player_1/rightsoftclicks");
+        p1RightSoftReleases = getAudioFiles("player_1/rightsoftreleases");
+
+        p2Clicks = getAudioFiles("player_2/clicks");
+        p2Releases = getAudioFiles("player_2/releases");
+        p2SoftClicks = getAudioFiles("player_2/softclicks");
+        p2SoftReleases = getAudioFiles("player_2/softreleases");
+
+        p2LeftClicks = getAudioFiles("player_2/leftclicks");
+        p2LeftReleases = getAudioFiles("player_2/leftreleases");
+        p2LeftSoftClicks = getAudioFiles("player_2/leftsoftclicks");
+        p2LeftSoftReleases = getAudioFiles("player_2/leftsoftreleases");
+
+        p2RightClicks = getAudioFiles("player_2/rightclicks");
+        p2RightReleases = getAudioFiles("player_2/rightreleases");
+        p2RightSoftClicks = getAudioFiles("player_2/rightsoftclicks");
+        p2RightSoftReleases = getAudioFiles("player_2/rightsoftreleases");
+    }
 
     if (p1Clicks.size() == 0) {
         std::cerr << "Error: P1 clicks not found.\n";
@@ -130,11 +211,6 @@ bool generateAudio(Macro &macro) {
         p1SoftReleases = p1Releases;
     }
 
-    p2Clicks = getAudioFiles("player_2/clicks");
-    p2Releases = getAudioFiles("player_2/releases");
-    p2SoftClicks = getAudioFiles("player_2/softclicks");
-    p2SoftReleases = getAudioFiles("player_2/softreleases");
-
     if (p2Clicks.size() == 0) {
         std::cerr << "Error: P2 clicks not found.\n";
         return false;
@@ -152,112 +228,93 @@ bool generateAudio(Macro &macro) {
         p2SoftReleases = p2Releases;
     }
 
-    if (macro.isPlatformer()) {
-        p1LeftClicks = getAudioFiles("player_1/leftclicks");
-        p1LeftReleases = getAudioFiles("player_1/leftreleases");
-        p1LeftSoftClicks = getAudioFiles("player_1/leftsoftclicks");
-        p1LeftSoftReleases = getAudioFiles("player_1/leftsoftreleases");
+    if (p1LeftClicks.size() == 0) {
+        std::cerr << "Error: P1 left clicks not found.\n";
+        return false;
+    }
 
-        p1RightClicks = getAudioFiles("player_1/rightclicks");
-        p1RightReleases = getAudioFiles("player_1/rightreleases");
-        p1RightSoftClicks = getAudioFiles("player_1/rightsoftclicks");
-        p1RightSoftReleases = getAudioFiles("player_1/rightsoftreleases");
+    if (p1LeftReleases.size() == 0) {
+        std::cerr << "Error: P1 left releases not found.\n";
+        return false;
+    }
 
-        if (p1LeftClicks.size() == 0) {
-            std::cerr << "Error: P1 left clicks not found.\n";
-            return false;
-        }
+    if (p1LeftSoftClicks.size() == 0) {
+        std::cerr << "Warning: P1 left softclicks not found, using normal clicks.\n";
+        p1LeftSoftClicks = p1LeftClicks;
+    }
 
-        if (p1LeftReleases.size() == 0) {
-            std::cerr << "Error: P1 left releases not found.\n";
-            return false;
-        }
+    if (p1LeftSoftReleases.size() == 0) {
+        std::cerr << "Warning: P1 left softreleases not found, using normal releases.\n";
+        p1LeftSoftReleases = p1LeftReleases;
+    }
 
-        if (p1LeftSoftClicks.size() == 0) {
-            std::cerr << "Warning: P1 left softclicks not found, using normal clicks.\n";
-            p1LeftSoftClicks = p1LeftClicks;
-        }
+    if (p1RightClicks.size() == 0) {
+        std::cerr << "Error: P1 right clicks not found.\n";
+        return false;
+    }
 
-        if (p1LeftSoftReleases.size() == 0) {
-            std::cerr << "Warning: P1 left softreleases not found, using normal releases.\n";
-            p1LeftSoftReleases = p1LeftReleases;
-        }
+    if (p1RightReleases.size() == 0) {
+        std::cerr << "Error: P1 right releases not found.\n";
+        return false;
+    }
 
-        if (p1RightClicks.size() == 0) {
-            std::cerr << "Error: P1 right clicks not found.\n";
-            return false;
-        }
+    if (p1RightSoftClicks.size() == 0) {
+        std::cerr << "Warning: P1 right softclicks not found, using normal clicks.\n";
+        p1RightSoftClicks = p1RightClicks;
+    }
 
-        if (p1RightReleases.size() == 0) {
-            std::cerr << "Error: P1 right releases not found.\n";
-            return false;
-        }
+    if (p1RightSoftReleases.size() == 0) {
+        std::cerr << "Warning: P1 right softreleases not found, using normal releases.\n";
+        p1RightSoftReleases = p1RightReleases;
+    }
 
-        if (p1RightSoftClicks.size() == 0) {
-            std::cerr << "Warning: P1 right softclicks not found, using normal clicks.\n";
-            p1RightSoftClicks = p1RightClicks;
-        }
+    if (p2LeftClicks.size() == 0) {
+        std::cerr << "Error: P2 left clicks not found.\n";
+        return false;
+    }
 
-        if (p1RightSoftReleases.size() == 0) {
-            std::cerr << "Warning: P1 right softreleases not found, using normal releases.\n";
-            p1RightSoftReleases = p1RightReleases;
-        }
+    if (p2LeftReleases.size() == 0) {
+        std::cerr << "Error: P2 left releases not found.\n";
+        return false;
+    }
 
-        p2LeftClicks = getAudioFiles("player_2/leftclicks");
-        p2LeftReleases = getAudioFiles("player_2/leftreleases");
-        p2LeftSoftClicks = getAudioFiles("player_2/leftsoftclicks");
-        p2LeftSoftReleases = getAudioFiles("player_2/leftsoftreleases");
+    if (p2LeftSoftClicks.size() == 0) {
+        std::cerr << "Warning: P2 left softclicks not found, using normal clicks.\n";
+        p2LeftSoftClicks = p2LeftClicks;
+    }
 
-        p2RightClicks = getAudioFiles("player_2/rightclicks");
-        p2RightReleases = getAudioFiles("player_2/rightreleases");
-        p2RightSoftClicks = getAudioFiles("player_2/rightsoftclicks");
-        p2RightSoftReleases = getAudioFiles("player_2/rightsoftreleases");
+    if (p2LeftSoftReleases.size() == 0) {
+        std::cerr << "Warning: P2 left softreleases not found, using normal releases.\n";
+        p2LeftSoftReleases = p2LeftReleases;
+    }
 
-        if (p2LeftClicks.size() == 0) {
-            std::cerr << "Error: P2 left clicks not found.\n";
-            return false;
-        }
+    if (p2RightClicks.size() == 0) {
+        std::cerr << "Error: P2 right clicks not found.\n";
+        return false;
+    }
 
-        if (p2LeftReleases.size() == 0) {
-            std::cerr << "Error: P2 left releases not found.\n";
-            return false;
-        }
+    if (p2RightReleases.size() == 0) {
+        std::cerr << "Error: P2 right releases not found.\n";
+        return false;
+    }
 
-        if (p2LeftSoftClicks.size() == 0) {
-            std::cerr << "Warning: P2 left softclicks not found, using normal clicks.\n";
-            p2LeftSoftClicks = p2LeftClicks;
-        }
+    if (p2RightSoftClicks.size() == 0) {
+        std::cerr << "Warning: P2 right softclicks not found, using normal clicks.\n";
+        p2RightSoftClicks = p2RightClicks;
+    }
 
-        if (p2LeftSoftReleases.size() == 0) {
-            std::cerr << "Warning: P2 left softreleases not found, using normal releases.\n";
-            p2LeftSoftReleases = p2LeftReleases;
-        }
-
-        if (p2RightClicks.size() == 0) {
-            std::cerr << "Error: P2 right clicks not found.\n";
-            return false;
-        }
-
-        if (p2RightReleases.size() == 0) {
-            std::cerr << "Error: P2 right releases not found.\n";
-            return false;
-        }
-
-        if (p2RightSoftClicks.size() == 0) {
-            std::cerr << "Warning: P2 right softclicks not found, using normal clicks.\n";
-            p2RightSoftClicks = p2RightClicks;
-        }
-
-        if (p2RightSoftReleases.size() == 0) {
-            std::cerr << "Warning: P2 right softreleases not found, using normal releases.\n";
-            p2RightSoftReleases = p2RightReleases;
-        }
+    if (p2RightSoftReleases.size() == 0) {
+        std::cerr << "Warning: P2 right softreleases not found, using normal releases.\n";
+        p2RightSoftReleases = p2RightReleases;
     }
 
     // Define the total duration in seconds of the output file
     float durationSeconds = (float)macro.getFrameCount() / macro.getFps() + 2; // add an extra 2 seconds so no releases get cut off
-    int sampleRate = p1Clicks[0].info.samplerate;
-    int channels = p1Clicks[0].info.channels;
+    if (!clickpackFileExists) {
+        sampleRate = p1Clicks[0].info.samplerate;
+        channels = p1Clicks[0].info.channels;
+    }
+
     sf_count_t totalFrames = static_cast<sf_count_t>(durationSeconds * sampleRate);
     std::vector<short> outputBuffer(totalFrames * channels, 0); // Silent buffer
 
@@ -440,8 +497,11 @@ bool generateAudio(Macro &macro) {
         addToBuffer(p2RightSoftReleaseTimes, p2RightSoftReleases, outputBuffer, sampleRate, channels);
     }
 
+    if (!clickpackFileExists) {
+        audioInfo = p1Clicks[0].info;
+    }
     // Write to new WAV file
-    SF_INFO sfinfoOut = p1Clicks[0].info;
+    SF_INFO sfinfoOut = audioInfo;
     sfinfoOut.frames = totalFrames;
     std::string macroName {macro.getModifiableName()};
     SNDFILE *outFile = sf_open(macroName.append(".wav").c_str(), SFM_WRITE, &sfinfoOut);
@@ -455,6 +515,55 @@ bool generateAudio(Macro &macro) {
     sf_close(outFile);
 
     std::cout << "Successfully generated clicks for " << macroName << '\n';
+
+    if (!clickpackFileExists) {
+        // Write clickpack to .wfb file
+        std::ofstream clickpackOutFile {"clickpack.wfb", std::ios::binary};
+
+        if (clickpackOutFile.is_open()) {
+            auto writeAudioVector = [&](const std::vector<AudioFile>& vec) {
+                int count = vec.size();
+                clickpackOutFile.write(reinterpret_cast<const char*>(&count), sizeof(count));
+                for (const AudioFile& audio : vec) {
+                    int bufferLen = audio.buffer.size(); // number of samples
+                    clickpackOutFile.write(reinterpret_cast<const char*>(&bufferLen), sizeof(bufferLen));
+                    clickpackOutFile.write(reinterpret_cast<const char*>(audio.buffer.data()), bufferLen * sizeof(short));
+                }
+            };
+
+            clickpackOutFile.write(reinterpret_cast<const char*>(&sampleRate), sizeof(sampleRate));
+            clickpackOutFile.write(reinterpret_cast<const char*>(&channels), sizeof(channels));
+            clickpackOutFile.write(reinterpret_cast<const char*>(&p1Clicks[0].info), sizeof(p1Clicks[0].info));
+
+            // Player 1
+            writeAudioVector(p1Clicks);
+            writeAudioVector(p1Releases);
+            writeAudioVector(p1SoftClicks);
+            writeAudioVector(p1SoftReleases);
+            writeAudioVector(p1LeftClicks);
+            writeAudioVector(p1LeftReleases);
+            writeAudioVector(p1LeftSoftClicks);
+            writeAudioVector(p1LeftSoftReleases);
+            writeAudioVector(p1RightClicks);
+            writeAudioVector(p1RightReleases);
+            writeAudioVector(p1RightSoftClicks);
+            writeAudioVector(p1RightSoftReleases);
+
+            // Player 2
+            writeAudioVector(p2Clicks);
+            writeAudioVector(p2Releases);
+            writeAudioVector(p2SoftClicks);
+            writeAudioVector(p2SoftReleases);
+            writeAudioVector(p2LeftClicks);
+            writeAudioVector(p2LeftReleases);
+            writeAudioVector(p2LeftSoftClicks);
+            writeAudioVector(p2LeftSoftReleases);
+            writeAudioVector(p2RightClicks);
+            writeAudioVector(p2RightReleases);
+            writeAudioVector(p2RightSoftClicks);
+            writeAudioVector(p2RightSoftReleases);
+        }
+    }
 
     return true;
 }
