@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 using namespace simdjson;
 
 int main(int argc, char *argv[]) {
-    std::string versionNumber{"1.4.1"};
+    std::string versionNumber{"1.5.0"};
     std::cout << "WaffleBot " << versionNumber << " by skyywaffle\n\n";
 
     Timer programTimer;

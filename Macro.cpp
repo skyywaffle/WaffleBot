@@ -113,7 +113,26 @@ void Macro::parseMacroJson() {
 
     // Parse MH Replay JSON
     else if (m_bot == Bot::MH_REPLAY_GDR) {
-        m_fps = 240; // Mega Hack Replay JSONs seem to only store time in 240fps frames, regardless of what FPS the macro was actually recorded at
+        // MH Replay macros have a "framerate" object only if physics bypass is enabled, else it's just 240fps
+        bool framerateIsNot240 = true;
+
+        // Get framerate
+        ondemand::value framerate_val;
+        auto err = macroData["framerate"].get(framerate_val);
+        if (err) {
+            m_fps = 240;
+            framerateIsNot240 = false;
+        }
+
+        if (framerateIsNot240) {
+            double framerate_double;
+            err = framerate_val.get(framerate_double);
+            if (err) {
+                framerate_double = 240.0;
+            }
+            m_fps = static_cast<int>(framerate_double);
+        }
+
         m_frameCount = static_cast<int>(macroData["duration"].get_int64());
     }
 
@@ -150,7 +169,6 @@ void Macro::parseMacroJson() {
                 m_actions.emplace_back(actionData, Bot::MH_REPLAY_GDR);
             } catch (const std::exception& e) {
                 std::cerr << "Error processing action: " << e.what() << "\n";
-                continue; // Skip malformed actions instead of crashing
             }
         }
 
