@@ -11,7 +11,6 @@ add_executable(WaffleBot main.cpp
         Action.h
         AudioHandling.cpp
         AudioHandling.h
-        Input.cpp
         Input.h
         Macro.cpp
         Macro.h
