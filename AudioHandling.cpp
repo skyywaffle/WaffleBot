@@ -516,6 +516,12 @@ bool generateAudio(Macro &macro) {
     std::string macroName {"generated_audio/"};
     macroName.append(macro.getModifiableName());
 
+    if (macroName.ends_with(".gdr")) {
+        for (int i {0}; i < 4; i++) {
+            macroName.pop_back();
+        }
+    }
+
     // Create the directory if it doesn't exist
     std::filesystem::create_directories("generated_audio");
 
