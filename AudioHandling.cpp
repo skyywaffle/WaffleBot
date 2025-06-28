@@ -513,7 +513,12 @@ bool generateAudio(Macro &macro) {
     // Write to new WAV file
     SF_INFO sfinfoOut = audioInfo;
     sfinfoOut.frames = totalFrames;
-    std::string macroName {macro.getModifiableName()};
+    std::string macroName {"generated_audio/"};
+    macroName.append(macro.getModifiableName());
+
+    // Create the directory if it doesn't exist
+    std::filesystem::create_directories("generated_audio");
+
     SNDFILE *outFile = sf_open(macroName.append(".wav").c_str(), SFM_WRITE, &sfinfoOut);
 
     if (!outFile) {
