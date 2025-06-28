@@ -109,7 +109,17 @@ bool generateAudio(Macro &macro) {
     std::vector<AudioFile> p2RightSoftClicks{};
     std::vector<AudioFile> p2RightSoftReleases{};
 
-    std::ifstream clickpackFile("clickpack.wfb", std::ios::binary);
+    std::string clickpackFilename{};
+
+    // Detect a .wfb file in the current directory
+    for (const auto& entry : std::filesystem::directory_iterator(".")) {
+        if (entry.is_regular_file() && entry.path().extension() == ".wfb") {
+            clickpackFilename = entry.path().filename().string();
+        }
+    }
+
+    // Attempt to open the clickpack file
+    std::ifstream clickpackFile(clickpackFilename.c_str(), std::ios::binary);
 
     int sampleRate;
     int channels;
